@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, BarChart3, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, BarChart3, Users, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ConsolidatedView from './ConsolidatedView';
 
 type AttendanceStatus = 'present' | 'absent' | null;
 
@@ -19,6 +21,7 @@ const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 export default function AttendanceTracker() {
   const [currentMonth, setCurrentMonth] = useState(0); // 0 = January 2026
   const [attendance, setAttendance] = useState<AttendanceData>({});
+  const [activeTab, setActiveTab] = useState("individual");
 
   const getDaysInMonth = (month: number, year: number = 2026) => {
     return new Date(year, month + 1, 0).getDate();
@@ -130,9 +133,24 @@ export default function AttendanceTracker() {
             </h1>
           </div>
           <p className="text-muted-foreground text-lg">
-            Track your office presence for 2026
+            Track office presence for 2026
           </p>
         </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+            <TabsTrigger value="individual" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Individual View
+            </TabsTrigger>
+            <TabsTrigger value="consolidated" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Team View
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="individual" className="space-y-6 mt-6">
 
         {/* Month Navigation */}
         <Card className="shadow-medium animate-scale-in">
@@ -288,6 +306,12 @@ export default function AttendanceTracker() {
             </Card>
           </div>
         </div>
+          </TabsContent>
+
+          <TabsContent value="consolidated" className="mt-6">
+            <ConsolidatedView />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
