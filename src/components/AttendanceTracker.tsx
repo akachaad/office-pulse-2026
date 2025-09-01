@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ConsolidatedView from './ConsolidatedView';
+import Navigation from './Navigation';
 
 type AttendanceStatus = 'present' | 'absent' | null;
 
@@ -124,6 +125,9 @@ export default function AttendanceTracker() {
   return (
     <div className="min-h-screen bg-gradient-subtle p-4">
       <div className="max-w-6xl mx-auto space-y-6">
+        {/* Navigation */}
+        <Navigation />
+        
         {/* Header */}
         <div className="text-center space-y-4 animate-fade-in">
           <div className="flex items-center justify-center gap-3">
