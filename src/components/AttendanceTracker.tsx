@@ -38,12 +38,59 @@ export default function AttendanceTracker() {
     return dayOfWeek === 0 || dayOfWeek === 6; // Sunday or Saturday
   };
 
+  const isFrenchBankHoliday = (day: number, month: number, year: number = 2026) => {
+    // Fixed holidays
+    const fixedHolidays = [
+      { month: 0, day: 1 },   // New Year's Day
+      { month: 4, day: 1 },   // Labour Day
+      { month: 4, day: 8 },   // Victory in Europe Day
+      { month: 6, day: 14 },  // Bastille Day
+      { month: 7, day: 15 },  // Assumption of Mary
+      { month: 10, day: 1 },  // All Saints' Day
+      { month: 10, day: 11 }, // Armistice Day
+      { month: 11, day: 25 }, // Christmas Day
+    ];
+
+    if (fixedHolidays.some(holiday => holiday.month === month && holiday.day === day)) {
+      return true;
+    }
+
+    // Calculate Easter for variable holidays (2026)
+    if (year === 2026) {
+      const easterDate = new Date(2026, 3, 5); // Easter Sunday April 5, 2026
+      
+      // Easter Monday (day after Easter)
+      const easterMonday = new Date(easterDate);
+      easterMonday.setDate(easterDate.getDate() + 1);
+      
+      // Ascension Day (39 days after Easter)
+      const ascensionDay = new Date(easterDate);
+      ascensionDay.setDate(easterDate.getDate() + 39);
+      
+      // Whit Monday (50 days after Easter)
+      const whitMonday = new Date(easterDate);
+      whitMonday.setDate(easterDate.getDate() + 50);
+      
+      const variableHolidays = [easterMonday, ascensionDay, whitMonday];
+      
+      return variableHolidays.some(holiday => 
+        holiday.getDate() === day && holiday.getMonth() === month
+      );
+    }
+
+    return false;
+  };
+
+  const isNonWorkingDay = (day: number, month: number, year: number = 2026) => {
+    return isWeekend(day, month, year) || isFrenchBankHoliday(day, month, year);
+  };
+
   const formatDateKey = (day: number, month: number, year: number = 2026) => {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
   const toggleAttendance = (day: number, month: number) => {
-    if (isWeekend(day, month)) return; // Don't allow marking weekends
+    if (isNonWorkingDay(day, month)) return; // Don't allow marking non-working days
     
     const dateKey = formatDateKey(day, month);
     const currentStatus = attendance[dateKey];
@@ -76,7 +123,7 @@ export default function AttendanceTracker() {
     const homeworking = monthAttendance.filter(([, status]) => status === 'homeworking').length;
     const total = getDaysInMonth(currentMonth);
     const weekdays = Array.from({ length: total }, (_, i) => i + 1)
-      .filter(day => !isWeekend(day, currentMonth)).length;
+      .filter(day => !isNonWorkingDay(day, currentMonth)).length;
     
     return { present, absent, homeworking, total: weekdays, unmarked: weekdays - present - absent - homeworking };
   };
@@ -95,11 +142,11 @@ export default function AttendanceTracker() {
     for (let day = 1; day <= daysInMonth; day++) {
       const dateKey = formatDateKey(day, currentMonth);
       const status = attendance[dateKey];
-      const weekend = isWeekend(day, currentMonth);
+      const nonWorkingDay = isNonWorkingDay(day, currentMonth);
       
       let dayClasses = "aspect-square flex items-center justify-center text-sm font-medium cursor-pointer transition-all duration-200 rounded-lg border-2 border-transparent";
       
-      if (weekend) {
+      if (nonWorkingDay) {
         dayClasses += " bg-weekend text-weekend-foreground cursor-not-allowed";
       } else if (status === 'present') {
         dayClasses += " bg-present text-present-foreground shadow-soft hover:shadow-medium";
@@ -227,7 +274,7 @@ export default function AttendanceTracker() {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-weekend rounded"></div>
-                    <span className="text-sm">Weekend</span>
+                    <span className="text-sm">Weekend/Holiday</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-card border border-border rounded"></div>
@@ -292,7 +339,7 @@ export default function AttendanceTracker() {
                     const daysInMonth = getDaysInMonth(currentMonth);
                     const newAttendance = { ...attendance };
                     for (let day = 1; day <= daysInMonth; day++) {
-                      if (!isWeekend(day, currentMonth)) {
+                      if (!isNonWorkingDay(day, currentMonth)) {
                         const dateKey = formatDateKey(day, currentMonth);
                         newAttendance[dateKey] = 'present';
                       }
@@ -309,7 +356,7 @@ export default function AttendanceTracker() {
                     const daysInMonth = getDaysInMonth(currentMonth);
                     const newAttendance = { ...attendance };
                     for (let day = 1; day <= daysInMonth; day++) {
-                      if (!isWeekend(day, currentMonth)) {
+                      if (!isNonWorkingDay(day, currentMonth)) {
                         const dateKey = formatDateKey(day, currentMonth);
                         newAttendance[dateKey] = null;
                       }
