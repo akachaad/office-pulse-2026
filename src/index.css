@@ -39,9 +39,9 @@ All colors MUST be HSL.
     --absent-foreground: 0 0% 100%;
     --absent-light: 0 50% 95%;
 
-    --homeworking: 37 91% 55%;
+    --homeworking: 210 91% 55%;
     --homeworking-foreground: 0 0% 100%;
-    --homeworking-light: 37 50% 95%;
+    --homeworking-light: 210 50% 95%;
 
     --weekend: 240 5% 96%;
     --weekend-foreground: 240 5% 60%;
@@ -111,9 +111,9 @@ All colors MUST be HSL.
     --absent-foreground: 0 0% 100%;
     --absent-light: 0 30% 15%;
 
-    --homeworking: 37 91% 60%;
+    --homeworking: 210 91% 60%;
     --homeworking-foreground: 0 0% 100%;
-    --homeworking-light: 37 30% 15%;
+    --homeworking-light: 210 30% 15%;
 
     --weekend: 240 10% 12%;
     --weekend-foreground: 240 5% 50%;
