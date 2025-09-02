@@ -113,7 +113,7 @@ export default function ConsolidatedView() {
     const daysInMonth = getDaysInMonth(month);
     const workingDays = [];
     
-    for (let day = 1; day <= Math.min(daysInMonth, 10); day++) {
+    for (let day = 1; day <= daysInMonth; day++) {
       if (!isWeekend(day, month)) {
         workingDays.push(day);
       }
@@ -216,7 +216,7 @@ export default function ConsolidatedView() {
         <Card className="shadow-medium animate-scale-in">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Daily Attendance - First 10 Working Days</span>
+              <span>Daily Attendance - Full Month</span>
               <Badge variant="outline" className="text-sm">
                 {filteredPeople.length} people
               </Badge>
