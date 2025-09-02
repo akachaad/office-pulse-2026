@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ConsolidatedView from './ConsolidatedView';
 import Navigation from './Navigation';
 
-type AttendanceStatus = 'present' | 'absent' | null;
+type AttendanceStatus = 'present' | 'absent' | 'homeworking' | null;
 
 interface AttendanceData {
   [key: string]: AttendanceStatus; // Format: "YYYY-MM-DD"
@@ -53,6 +53,8 @@ export default function AttendanceTracker() {
       newStatus = 'present';
     } else if (currentStatus === 'present') {
       newStatus = 'absent';
+    } else if (currentStatus === 'absent') {
+      newStatus = 'homeworking';
     } else {
       newStatus = null;
     }
@@ -71,11 +73,12 @@ export default function AttendanceTracker() {
     
     const present = monthAttendance.filter(([, status]) => status === 'present').length;
     const absent = monthAttendance.filter(([, status]) => status === 'absent').length;
+    const homeworking = monthAttendance.filter(([, status]) => status === 'homeworking').length;
     const total = getDaysInMonth(currentMonth);
     const weekdays = Array.from({ length: total }, (_, i) => i + 1)
       .filter(day => !isWeekend(day, currentMonth)).length;
     
-    return { present, absent, total: weekdays, unmarked: weekdays - present - absent };
+    return { present, absent, homeworking, total: weekdays, unmarked: weekdays - present - absent - homeworking };
   };
 
   const renderCalendarGrid = () => {
@@ -102,6 +105,8 @@ export default function AttendanceTracker() {
         dayClasses += " bg-present text-present-foreground shadow-soft hover:shadow-medium";
       } else if (status === 'absent') {
         dayClasses += " bg-absent text-absent-foreground shadow-soft hover:shadow-medium";
+      } else if (status === 'homeworking') {
+        dayClasses += " bg-homeworking text-homeworking-foreground shadow-soft hover:shadow-medium";
       } else {
         dayClasses += " bg-card border-border hover:border-primary hover:shadow-soft hover:scale-105";
       }
@@ -217,6 +222,10 @@ export default function AttendanceTracker() {
                     <span className="text-sm">Absent</span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-homeworking rounded"></div>
+                    <span className="text-sm">Homeworking</span>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-weekend rounded"></div>
                     <span className="text-sm">Weekend</span>
                   </div>
@@ -247,6 +256,10 @@ export default function AttendanceTracker() {
                   <span className="font-medium">Absent</span>
                   <span className="font-bold text-absent">{stats.absent}</span>
                 </div>
+                <div className="flex justify-between items-center p-3 bg-homeworking-light rounded-lg">
+                  <span className="font-medium">Homeworking</span>
+                  <span className="font-bold text-homeworking">{stats.homeworking}</span>
+                </div>
                 <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                   <span className="font-medium">Not marked</span>
                   <span className="font-bold">{stats.unmarked}</span>
@@ -255,8 +268,8 @@ export default function AttendanceTracker() {
                   <div className="flex justify-between items-center font-semibold">
                     <span>Attendance Rate</span>
                     <span className="text-primary">
-                      {stats.present + stats.absent > 0 
-                        ? Math.round((stats.present / (stats.present + stats.absent)) * 100)
+                      {stats.present + stats.absent + stats.homeworking > 0 
+                        ? Math.round((stats.present / (stats.present + stats.absent + stats.homeworking)) * 100)
                         : 0}%
                     </span>
                   </div>
