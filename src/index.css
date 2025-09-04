@@ -39,6 +39,18 @@ All colors MUST be HSL.
     --absent-foreground: 0 0% 100%;
     --absent-light: 0 50% 95%;
 
+    --sickness: 0 84% 65%;
+    --sickness-foreground: 0 0% 100%;
+    --sickness-light: 0 50% 95%;
+
+    --holidays: 280 100% 70%;
+    --holidays-foreground: 0 0% 100%;
+    --holidays-light: 280 50% 95%;
+
+    --training: 45 93% 47%;
+    --training-foreground: 0 0% 100%;
+    --training-light: 45 50% 95%;
+
     --homeworking: 217 91% 60%;
     --homeworking-foreground: 0 0% 100%;
     --homeworking-light: 217 50% 95%;
@@ -110,6 +122,18 @@ All colors MUST be HSL.
     --absent: 0 84% 65%;
     --absent-foreground: 0 0% 100%;
     --absent-light: 0 30% 15%;
+
+    --sickness: 0 84% 65%;
+    --sickness-foreground: 0 0% 100%;
+    --sickness-light: 0 30% 15%;
+
+    --holidays: 280 100% 70%;
+    --holidays-foreground: 0 0% 100%;
+    --holidays-light: 280 30% 15%;
+
+    --training: 45 93% 47%;
+    --training-foreground: 0 0% 100%;
+    --training-light: 45 30% 15%;
 
     --homeworking: 217 91% 60%;
     --homeworking-foreground: 0 0% 100%;

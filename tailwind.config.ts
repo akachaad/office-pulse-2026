@@ -64,6 +64,26 @@ export default {
 					foreground: 'hsl(var(--absent-foreground))',
 					light: 'hsl(var(--absent-light))'
 				},
+				sickness: {
+					DEFAULT: 'hsl(var(--sickness))',
+					foreground: 'hsl(var(--sickness-foreground))',
+					light: 'hsl(var(--sickness-light))'
+				},
+				holidays: {
+					DEFAULT: 'hsl(var(--holidays))',
+					foreground: 'hsl(var(--holidays-foreground))',
+					light: 'hsl(var(--holidays-light))'
+				},
+				training: {
+					DEFAULT: 'hsl(var(--training))',
+					foreground: 'hsl(var(--training-foreground))',
+					light: 'hsl(var(--training-light))'
+				},
+				homeworking: {
+					DEFAULT: 'hsl(var(--homeworking))',
+					foreground: 'hsl(var(--homeworking-foreground))',
+					light: 'hsl(var(--homeworking-light))'
+				},
 				weekend: {
 					DEFAULT: 'hsl(var(--weekend))',
 					foreground: 'hsl(var(--weekend-foreground))'

@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ConsolidatedView from './ConsolidatedView';
 import Navigation from './Navigation';
 
-type AttendanceStatus = 'present' | 'absent' | 'homeworking' | null;
+type AttendanceStatus = 'present' | 'sickness' | 'holidays' | 'training' | 'homeworking' | null;
 
 interface AttendanceData {
   [key: string]: AttendanceStatus; // Format: "YYYY-MM-DD"
@@ -99,8 +99,12 @@ export default function AttendanceTracker() {
     if (currentStatus === null || currentStatus === undefined) {
       newStatus = 'present';
     } else if (currentStatus === 'present') {
-      newStatus = 'absent';
-    } else if (currentStatus === 'absent') {
+      newStatus = 'sickness';
+    } else if (currentStatus === 'sickness') {
+      newStatus = 'holidays';
+    } else if (currentStatus === 'holidays') {
+      newStatus = 'training';
+    } else if (currentStatus === 'training') {
       newStatus = 'homeworking';
     } else {
       newStatus = null;
@@ -119,13 +123,15 @@ export default function AttendanceTracker() {
     );
     
     const present = monthAttendance.filter(([, status]) => status === 'present').length;
-    const absent = monthAttendance.filter(([, status]) => status === 'absent').length;
+    const sickness = monthAttendance.filter(([, status]) => status === 'sickness').length;
+    const holidays = monthAttendance.filter(([, status]) => status === 'holidays').length;
+    const training = monthAttendance.filter(([, status]) => status === 'training').length;
     const homeworking = monthAttendance.filter(([, status]) => status === 'homeworking').length;
     const total = getDaysInMonth(currentMonth);
     const weekdays = Array.from({ length: total }, (_, i) => i + 1)
       .filter(day => !isNonWorkingDay(day, currentMonth)).length;
     
-    return { present, absent, homeworking, total: weekdays, unmarked: weekdays - present - absent - homeworking };
+    return { present, sickness, holidays, training, homeworking, total: weekdays, unmarked: weekdays - present - sickness - holidays - training - homeworking };
   };
 
   const renderCalendarGrid = () => {
@@ -150,8 +156,12 @@ export default function AttendanceTracker() {
         dayClasses += " bg-weekend text-weekend-foreground cursor-not-allowed";
       } else if (status === 'present') {
         dayClasses += " bg-present text-present-foreground shadow-soft hover:shadow-medium";
-      } else if (status === 'absent') {
-        dayClasses += " bg-absent text-absent-foreground shadow-soft hover:shadow-medium";
+      } else if (status === 'sickness') {
+        dayClasses += " bg-sickness text-sickness-foreground shadow-soft hover:shadow-medium";
+      } else if (status === 'holidays') {
+        dayClasses += " bg-holidays text-holidays-foreground shadow-soft hover:shadow-medium";
+      } else if (status === 'training') {
+        dayClasses += " bg-training text-training-foreground shadow-soft hover:shadow-medium";
       } else if (status === 'homeworking') {
         dayClasses += " bg-homeworking text-homeworking-foreground shadow-soft hover:shadow-medium";
       } else {
@@ -265,8 +275,16 @@ export default function AttendanceTracker() {
                     <span className="text-sm">Present</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-absent rounded"></div>
-                    <span className="text-sm">Absent</span>
+                    <div className="w-4 h-4 bg-sickness rounded"></div>
+                    <span className="text-sm">Sickness Leave</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-holidays rounded"></div>
+                    <span className="text-sm">Holidays</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-training rounded"></div>
+                    <span className="text-sm">Training</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-homeworking rounded"></div>
@@ -299,9 +317,17 @@ export default function AttendanceTracker() {
                   <span className="font-medium">Present</span>
                   <span className="font-bold text-present">{stats.present}</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-absent-light rounded-lg">
-                  <span className="font-medium">Absent</span>
-                  <span className="font-bold text-absent">{stats.absent}</span>
+                <div className="flex justify-between items-center p-3 bg-sickness-light rounded-lg">
+                  <span className="font-medium">Sickness Leave</span>
+                  <span className="font-bold text-sickness">{stats.sickness}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-holidays-light rounded-lg">
+                  <span className="font-medium">Holidays</span>
+                  <span className="font-bold text-holidays">{stats.holidays}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-training-light rounded-lg">
+                  <span className="font-medium">Training</span>
+                  <span className="font-bold text-training">{stats.training}</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-homeworking-light rounded-lg">
                   <span className="font-medium">Homeworking</span>
@@ -315,8 +341,8 @@ export default function AttendanceTracker() {
                   <div className="flex justify-between items-center font-semibold">
                     <span>Attendance Rate</span>
                     <span className="text-primary">
-                      {stats.present + stats.absent + stats.homeworking > 0 
-                        ? Math.round((stats.present / (stats.present + stats.absent + stats.homeworking)) * 100)
+                      {stats.present + stats.sickness + stats.holidays + stats.training + stats.homeworking > 0 
+                        ? Math.round((stats.present / (stats.present + stats.sickness + stats.holidays + stats.training + stats.homeworking)) * 100)
                         : 0}%
                     </span>
                   </div>
