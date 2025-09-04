@@ -1,99 +1,79 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Users, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { usePeople } from '@/hooks/usePeople';
+import { useAttendance } from '@/hooks/useAttendance';
 
-type AttendanceStatus = 'present' | 'absent' | null;
+type AttendanceStatus = 'present' | 'sickness' | 'holidays' | 'training' | 'homeworking' | null;
 
-interface Person {
-  id: string;
+interface PersonWithAttendance {
+  id: number;
   name: string;
+  surname: string;
   role: string;
   team: string;
   attendance: { [key: string]: AttendanceStatus };
 }
 
-// Mock data for demonstration
-const MOCK_PEOPLE: Person[] = [
-  {
-    id: '1',
-    name: 'Alice Johnson',
-    role: 'Senior Developer',
-    team: 'Engineering',
-    attendance: {
-      '2026-01-02': 'present',
-      '2026-01-03': 'present',
-      '2026-01-06': 'absent',
-      '2026-01-07': 'present',
-      '2026-01-08': 'present',
-      '2026-01-09': 'absent',
-      '2026-01-10': 'present',
-    }
-  },
-  {
-    id: '2',
-    name: 'Bob Smith',
-    role: 'Product Manager',
-    team: 'Product',
-    attendance: {
-      '2026-01-02': 'present',
-      '2026-01-03': 'absent',
-      '2026-01-06': 'present',
-      '2026-01-07': 'present',
-      '2026-01-08': 'absent',
-      '2026-01-09': 'present',
-      '2026-01-10': 'present',
-    }
-  },
-  {
-    id: '3',
-    name: 'Carol Davis',
-    role: 'UX Designer',
-    team: 'Design',
-    attendance: {
-      '2026-01-02': 'absent',
-      '2026-01-03': 'present',
-      '2026-01-06': 'present',
-      '2026-01-07': 'absent',
-      '2026-01-08': 'present',
-      '2026-01-09': 'present',
-      '2026-01-10': 'absent',
-    }
-  },
-  {
-    id: '4',
-    name: 'David Wilson',
-    role: 'DevOps Engineer',
-    team: 'Engineering',
-    attendance: {
-      '2026-01-02': 'present',
-      '2026-01-03': 'present',
-      '2026-01-06': 'present',
-      '2026-01-07': 'present',
-      '2026-01-08': 'present',
-      '2026-01-09': 'present',
-      '2026-01-10': 'present',
-    }
-  }
-];
-
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
-
 export default function ConsolidatedView() {
   const [currentMonth, setCurrentMonth] = useState(0); // 0 = January 2026
   const [selectedTeam, setSelectedTeam] = useState<string>('All');
-  const [people] = useState<Person[]>(MOCK_PEOPLE);
+  
+  const { data: peopleData, isLoading: peopleLoading } = usePeople();
+  const { data: attendanceData, isLoading: attendanceLoading } = useAttendance(currentMonth);
+  
+  // Transform data to match component interface
+  const people = useMemo<PersonWithAttendance[]>(() => {
+    if (!peopleData || !attendanceData) return [];
+    
+    return peopleData.map(person => {
+      const personAttendance: { [key: string]: AttendanceStatus } = {};
+      
+      attendanceData
+        .filter(record => record.person_id === person.id)
+        .forEach(record => {
+          personAttendance[record.date] = record.status;
+        });
+      
+      return {
+        id: person.id,
+        name: `${person.name} ${person.surname}`.trim(),
+        surname: person.surname,
+        role: person.role || 'Team Member',
+        team: person.team || 'General',
+        attendance: personAttendance,
+      };
+    });
+  }, [peopleData, attendanceData]);
 
   const teams = ['All', ...Array.from(new Set(people.map(p => p.team)))];
 
   const filteredPeople = selectedTeam === 'All' 
     ? people 
     : people.filter(p => p.team === selectedTeam);
+
+  if (peopleLoading || attendanceLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-subtle p-4">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="text-center space-y-4 animate-fade-in">
+            <div className="flex items-center justify-center gap-3">
+              <Users className="h-8 w-8 text-primary" />
+              <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                Team Attendance Overview
+              </h1>
+            </div>
+            <p className="text-muted-foreground text-lg">
+              Loading team data...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const getDaysInMonth = (month: number, year: number = 2026) => {
     return new Date(year, month + 1, 0).getDate();
@@ -109,42 +89,103 @@ export default function ConsolidatedView() {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
+  const isFrenchBankHoliday = (day: number, month: number, year: number = 2026) => {
+    // Fixed holidays
+    const fixedHolidays = [
+      { month: 0, day: 1 },   // New Year's Day
+      { month: 4, day: 1 },   // Labour Day
+      { month: 4, day: 8 },   // Victory in Europe Day
+      { month: 6, day: 14 },  // Bastille Day
+      { month: 7, day: 15 },  // Assumption of Mary
+      { month: 10, day: 1 },  // All Saints' Day
+      { month: 10, day: 11 }, // Armistice Day
+      { month: 11, day: 25 }, // Christmas Day
+    ];
+
+    if (fixedHolidays.some(holiday => holiday.month === month && holiday.day === day)) {
+      return true;
+    }
+
+    // Calculate Easter for variable holidays (2026)
+    if (year === 2026) {
+      const easterDate = new Date(2026, 3, 5); // Easter Sunday April 5, 2026
+      
+      // Easter Monday (day after Easter)
+      const easterMonday = new Date(easterDate);
+      easterMonday.setDate(easterDate.getDate() + 1);
+      
+      // Ascension Day (39 days after Easter)
+      const ascensionDay = new Date(easterDate);
+      ascensionDay.setDate(easterDate.getDate() + 39);
+      
+      // Whit Monday (50 days after Easter)
+      const whitMonday = new Date(easterDate);
+      whitMonday.setDate(easterDate.getDate() + 50);
+      
+      const variableHolidays = [easterMonday, ascensionDay, whitMonday];
+      
+      return variableHolidays.some(holiday => 
+        holiday.getDate() === day && holiday.getMonth() === month
+      );
+    }
+
+    return false;
+  };
+
+  const isNonWorkingDay = (day: number, month: number, year: number = 2026) => {
+    return isWeekend(day, month, year) || isFrenchBankHoliday(day, month, year);
+  };
+
   const getWorkingDays = (month: number) => {
     const daysInMonth = getDaysInMonth(month);
     const workingDays = [];
     
     for (let day = 1; day <= daysInMonth; day++) {
-      if (!isWeekend(day, month)) {
+      if (!isNonWorkingDay(day, month)) {
         workingDays.push(day);
       }
     }
     return workingDays;
   };
 
-  const getPersonStats = (person: Person, month: number) => {
+  const getPersonStats = (person: PersonWithAttendance, month: number) => {
     const monthKey = `2026-${String(month + 1).padStart(2, '0')}`;
     const monthAttendance = Object.entries(person.attendance).filter(([date]) => 
       date.startsWith(monthKey)
     );
     
     const present = monthAttendance.filter(([, status]) => status === 'present').length;
-    const absent = monthAttendance.filter(([, status]) => status === 'absent').length;
+    const sickness = monthAttendance.filter(([, status]) => status === 'sickness').length;
+    const holidays = monthAttendance.filter(([, status]) => status === 'holidays').length;
+    const training = monthAttendance.filter(([, status]) => status === 'training').length;
+    const homeworking = monthAttendance.filter(([, status]) => status === 'homeworking').length;
     const total = monthAttendance.length;
     
-    return { present, absent, total, rate: total > 0 ? Math.round((present / total) * 100) : 0 };
+    return { present, sickness, holidays, training, homeworking, total, rate: total > 0 ? Math.round((present / total) * 100) : 0 };
   };
 
   const getStatusIcon = (status: AttendanceStatus) => {
     if (status === 'present') return '✓';
-    if (status === 'absent') return '✗';
+    if (status === 'sickness') return '🤒';
+    if (status === 'holidays') return '🏖️';
+    if (status === 'training') return '📚';
+    if (status === 'homeworking') return '🏠';
     return '—';
   };
 
   const getStatusColor = (status: AttendanceStatus) => {
     if (status === 'present') return 'text-present';
-    if (status === 'absent') return 'text-absent';
+    if (status === 'sickness') return 'text-sickness';
+    if (status === 'holidays') return 'text-holidays';
+    if (status === 'training') return 'text-training';
+    if (status === 'homeworking') return 'text-homeworking';
     return 'text-muted-foreground';
   };
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
 
   const workingDays = getWorkingDays(currentMonth);
 
