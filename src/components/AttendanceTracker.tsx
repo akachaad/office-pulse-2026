@@ -357,41 +357,76 @@ export default function AttendanceTracker() {
                   Quick Actions
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start hover:shadow-soft"
-                  onClick={() => {
-                    const daysInMonth = getDaysInMonth(currentMonth);
-                    const newAttendance = { ...attendance };
-                    for (let day = 1; day <= daysInMonth; day++) {
-                      if (!isNonWorkingDay(day, currentMonth)) {
-                        const dateKey = formatDateKey(day, currentMonth);
-                        newAttendance[dateKey] = 'present';
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start hover:shadow-soft"
+                    onClick={() => {
+                      const daysInMonth = getDaysInMonth(currentMonth);
+                      const newAttendance = { ...attendance };
+                      for (let day = 1; day <= daysInMonth; day++) {
+                        if (!isNonWorkingDay(day, currentMonth)) {
+                          const dateKey = formatDateKey(day, currentMonth);
+                          newAttendance[dateKey] = 'present';
+                        }
                       }
-                    }
-                    setAttendance(newAttendance);
-                  }}
-                >
-                  Mark all as Present
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start hover:shadow-soft"
-                  onClick={() => {
-                    const daysInMonth = getDaysInMonth(currentMonth);
-                    const newAttendance = { ...attendance };
-                    for (let day = 1; day <= daysInMonth; day++) {
-                      if (!isNonWorkingDay(day, currentMonth)) {
-                        const dateKey = formatDateKey(day, currentMonth);
-                        newAttendance[dateKey] = null;
+                      setAttendance(newAttendance);
+                    }}
+                  >
+                    Mark all as Present
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start hover:shadow-soft"
+                    onClick={() => {
+                      const daysInMonth = getDaysInMonth(currentMonth);
+                      const newAttendance = { ...attendance };
+                      for (let day = 1; day <= daysInMonth; day++) {
+                        if (!isNonWorkingDay(day, currentMonth)) {
+                          const dateKey = formatDateKey(day, currentMonth);
+                          newAttendance[dateKey] = null;
+                        }
                       }
-                    }
-                    setAttendance(newAttendance);
-                  }}
-                >
-                  Clear this month
-                </Button>
+                      setAttendance(newAttendance);
+                    }}
+                  >
+                    Clear this month
+                  </Button>
+                </div>
+                
+                <div className="pt-2 border-t border-border">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Mark Regular Homeworking Days:</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((dayName, index) => {
+                      const weekdayIndex = index + 1; // Monday = 1, Tuesday = 2, etc.
+                      return (
+                        <Button
+                          key={dayName}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs hover:shadow-soft hover:bg-homeworking-light"
+                          onClick={() => {
+                            const daysInMonth = getDaysInMonth(currentMonth);
+                            const newAttendance = { ...attendance };
+                            for (let day = 1; day <= daysInMonth; day++) {
+                              if (!isNonWorkingDay(day, currentMonth)) {
+                                const date = new Date(2026, currentMonth, day);
+                                if (date.getDay() === weekdayIndex) {
+                                  const dateKey = formatDateKey(day, currentMonth);
+                                  newAttendance[dateKey] = 'homeworking';
+                                }
+                              }
+                            }
+                            setAttendance(newAttendance);
+                          }}
+                        >
+                          {dayName.slice(0, 3)}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
