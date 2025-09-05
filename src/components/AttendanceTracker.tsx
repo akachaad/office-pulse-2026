@@ -320,6 +320,7 @@ export default function AttendanceTracker() {
                 <div className="flex justify-between items-center p-3 bg-holidays-light rounded-lg">
                   <span className="font-medium">Holidays</span>
                   <span className="font-bold text-holidays">{stats.holidays}</span>
+                </div>
                 <div className="flex justify-between items-center p-3 bg-sickness-light rounded-lg">
                   <span className="font-medium">Sickness Leave</span>
                   <span className="font-bold text-sickness">{stats.sickness}</span>
