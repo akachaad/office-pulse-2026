@@ -1,7 +1,7 @@
-import ConsolidatedView from '@/components/ConsolidatedView';
+import AttendanceTracker from '@/components/AttendanceTracker';
 
 const Index = () => {
-  return <ConsolidatedView />;
+  return <AttendanceTracker />;
 };
 
 export default Index;
