@@ -275,12 +275,12 @@ export default function AttendanceTracker() {
                     <span className="text-sm">Present</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-sickness rounded"></div>
-                    <span className="text-sm">Sickness Leave</span>
-                  </div>
-                  <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-holidays rounded"></div>
                     <span className="text-sm">Holidays</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-sickness rounded"></div>
+                    <span className="text-sm">Sickness Leave</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-training rounded"></div>
@@ -323,7 +323,6 @@ export default function AttendanceTracker() {
                 <div className="flex justify-between items-center p-3 bg-sickness-light rounded-lg">
                   <span className="font-medium">Sickness Leave</span>
                   <span className="font-bold text-sickness">{stats.sickness}</span>
-                </div>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-training-light rounded-lg">
                   <span className="font-medium">Training</span>
