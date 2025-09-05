@@ -9,6 +9,7 @@ export interface Person {
   team: string;
   capacity: number;
   nature: string;
+  trigramme: string;
   created_at: string;
 }
 
