@@ -3,8 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface Person {
   id: number;
-  name: string;
-  surname: string;
   role: string;
   team: string;
   capacity: number;
@@ -20,7 +18,7 @@ export const usePeople = () => {
       const { data, error } = await supabase
         .from('People')
         .select('*')
-        .order('name');
+        .order('trigramme');
       
       if (error) {
         throw error;
