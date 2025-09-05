@@ -11,7 +11,7 @@ type AttendanceStatus = 'present' | 'sickness' | 'holidays' | 'training' | 'home
 
 interface PersonWithAttendance {
   id: number;
-  trigramme: string;
+  name: string;
   surname: string;
   role: string;
   team: string;
@@ -40,8 +40,8 @@ export default function ConsolidatedView() {
       
       return {
         id: person.id,
-        trigramme: person.trigramme || 'N/A',
-        surname: person.surname,
+        name: person.name || 'N/A',
+        surname: person.surname || '',
         role: person.role || 'Team Member',
         team: person.team || 'General',
         attendance: personAttendance,
@@ -268,7 +268,7 @@ const MONTHS = [
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="min-w-[160px]">Trigramme</TableHead>
+                    <TableHead className="min-w-[160px]">Name</TableHead>
                     <TableHead className="min-w-[120px]">Role</TableHead>
                     <TableHead className="min-w-[100px]">Team</TableHead>
                     {workingDays.map(day => (
@@ -284,7 +284,7 @@ const MONTHS = [
                     const stats = getPersonStats(person, currentMonth);
                     return (
                       <TableRow key={person.id} className="hover:bg-muted/50">
-                        <TableCell className="font-medium">{person.trigramme}</TableCell>
+                        <TableCell className="font-medium">{person.name} {person.surname}</TableCell>
                         <TableCell className="text-muted-foreground">{person.role}</TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="text-xs">

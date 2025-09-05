@@ -99,10 +99,10 @@ export default function AttendanceTracker() {
     if (currentStatus === null || currentStatus === undefined) {
       newStatus = 'present';
     } else if (currentStatus === 'present') {
-      newStatus = 'sickness';
-    } else if (currentStatus === 'sickness') {
       newStatus = 'holidays';
     } else if (currentStatus === 'holidays') {
+      newStatus = 'sickness';
+    } else if (currentStatus === 'sickness') {
       newStatus = 'training';
     } else if (currentStatus === 'training') {
       newStatus = 'homeworking';
