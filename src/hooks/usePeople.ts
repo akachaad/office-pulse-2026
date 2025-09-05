@@ -7,8 +7,7 @@ export interface Person {
   team: string;
   capacity: number;
   nature: string;
-  name: string;
-  surname: string;
+  trigramme: string;
   created_at: string;
 }
 
@@ -25,14 +24,13 @@ export const usePeople = () => {
         throw error;
       }
       
-      return data.map(person => ({
+      return data.map((person: any) => ({
         id: person.id,
         role: person.role || 'Team Member',
         team: person.team || 'General',
         capacity: person.capacity || 0,
         nature: person.nature || '',
-        name: person.name || 'N/A',
-        surname: person.surname || '',
+        trigramme: person.trigramme || 'N/A',
         created_at: person.created_at,
       })) as Person[];
     },
