@@ -180,12 +180,76 @@ export default function ConsolidatedView() {
     return 'text-muted-foreground';
   };
 
+  // Sprint calculation functions
+  const getSprintInfo = (day: number, month: number, year: number = 2026) => {
+    const date = new Date(year, month, day);
+    const sprintStartDate = new Date(2026, 0, 5); // January 5th, 2026
+    
+    // Calculate days since sprint start
+    const daysSinceStart = Math.floor((date.getTime() - sprintStartDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysSinceStart < 0) {
+      return { sprintNumber: 0, isSprintBoundary: false, isSprintStart: false, isSprintEnd: false };
+    }
+    
+    const sprintNumber = Math.floor(daysSinceStart / 14) + 1;
+    const dayInSprint = daysSinceStart % 14;
+    const isSprintStart = dayInSprint === 0;
+    const isSprintEnd = dayInSprint === 13;
+    const isSprintBoundary = isSprintStart || isSprintEnd;
+    
+    return { sprintNumber, isSprintBoundary, isSprintStart, isSprintEnd };
+  };
+
+  const getSprintClass = (day: number, month: number) => {
+    const sprintInfo = getSprintInfo(day, month);
+    
+    if (sprintInfo.sprintNumber === 0) return '';
+    
+    let classes = '';
+    
+    // Alternate sprint background colors
+    if (sprintInfo.sprintNumber % 2 === 1) {
+      classes += 'bg-blue-50 dark:bg-blue-950/20 ';
+    } else {
+      classes += 'bg-green-50 dark:bg-green-950/20 ';
+    }
+    
+    // Add border for sprint boundaries
+    if (sprintInfo.isSprintStart) {
+      classes += 'border-l-4 border-primary ';
+    }
+    if (sprintInfo.isSprintEnd) {
+      classes += 'border-r-4 border-primary ';
+    }
+    
+    return classes.trim();
+  };
+
+  const getSprintHeaderInfo = (workingDays: number[]) => {
+    const sprintHeaders: { [key: number]: { sprintNumber: number; isStart: boolean; isEnd: boolean } } = {};
+    
+    workingDays.forEach(day => {
+      const sprintInfo = getSprintInfo(day, currentMonth);
+      if (sprintInfo.sprintNumber > 0) {
+        sprintHeaders[day] = {
+          sprintNumber: sprintInfo.sprintNumber,
+          isStart: sprintInfo.isSprintStart,
+          isEnd: sprintInfo.isSprintEnd
+        };
+      }
+    });
+    
+    return sprintHeaders;
+  };
+
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
   const workingDays = getWorkingDays(currentMonth);
+  const sprintHeaders = getSprintHeaderInfo(workingDays);
 
   return (
     <div className="min-h-screen bg-gradient-subtle p-4">
@@ -251,6 +315,37 @@ const MONTHS = [
           </div>
         </div>
 
+        {/* Sprint Legend */}
+        <Card className="shadow-medium animate-fade-in">
+          <CardContent className="p-4">
+            <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">Sprint Legend:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-blue-50 dark:bg-blue-950/20 border border-primary border-l-4 rounded-sm"></div>
+                <span>Odd Sprints (1, 3, 5...)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-green-50 dark:bg-green-950/20 border border-primary border-l-4 rounded-sm"></div>
+                <span>Even Sprints (2, 4, 6...)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono">S1</span>
+                <span>Sprint Start</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs">→</span>
+                <span>Sprint End</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs">•</span>
+                <span>Sprint Day</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Attendance Table */}
         <Card className="shadow-medium animate-scale-in">
           <CardHeader>
@@ -265,12 +360,28 @@ const MONTHS = [
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
+                  {/* Sprint row */}
+                  <TableRow className="border-b-2">
+                    <TableHead className="min-w-[160px] border-b-0"></TableHead>
+                    <TableHead className="min-w-[120px] border-b-0"></TableHead>
+                    <TableHead className="min-w-[100px] border-b-0"></TableHead>
+                    {workingDays.map(day => {
+                      const sprintInfo = sprintHeaders[day];
+                      return (
+                        <TableHead key={`sprint-${day}`} className={`text-center min-w-[50px] border-b-0 text-xs font-medium ${sprintInfo ? getSprintClass(day, currentMonth) : ''}`}>
+                          {sprintInfo?.isStart ? `S${sprintInfo.sprintNumber}` : sprintInfo?.isEnd ? '→' : sprintInfo ? '•' : ''}
+                        </TableHead>
+                      );
+                    })}
+                    <TableHead className="text-center min-w-[80px] border-b-0"></TableHead>
+                  </TableRow>
+                  {/* Day row */}
                   <TableRow>
                     <TableHead className="min-w-[160px]">Name</TableHead>
                     <TableHead className="min-w-[120px]">Role</TableHead>
                     <TableHead className="min-w-[100px]">Team</TableHead>
                     {workingDays.map(day => (
-                      <TableHead key={day} className="text-center min-w-[50px]">
+                      <TableHead key={day} className={`text-center min-w-[50px] ${getSprintClass(day, currentMonth)}`}>
                         {day}
                       </TableHead>
                     ))}
@@ -293,7 +404,7 @@ const MONTHS = [
                           const dateKey = formatDateKey(day, currentMonth);
                           const status = person.attendance[dateKey];
                           return (
-                            <TableCell key={day} className="text-center">
+                            <TableCell key={day} className={`text-center ${getSprintClass(day, currentMonth)}`}>
                               <span className={`text-lg font-bold ${getStatusColor(status)}`}>
                                 {getStatusIcon(status)}
                               </span>
