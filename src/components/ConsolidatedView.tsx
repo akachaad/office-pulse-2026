@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Users, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,6 +52,26 @@ export default function ConsolidatedView() {
   const filteredPeople = selectedTeam === 'All' 
     ? people 
     : people.filter(p => p.team === selectedTeam);
+
+  // Group people by team
+  const groupedPeople = useMemo(() => {
+    const groups: { [key: string]: PersonWithAttendance[] } = {};
+    
+    filteredPeople.forEach(person => {
+      const team = person.team || 'General';
+      if (!groups[team]) {
+        groups[team] = [];
+      }
+      groups[team].push(person);
+    });
+    
+    // Sort people within each team by trigramme
+    Object.keys(groups).forEach(team => {
+      groups[team].sort((a, b) => a.trigramme.localeCompare(b.trigramme));
+    });
+    
+    return groups;
+  }, [filteredPeople]);
 
   if (peopleLoading || attendanceLoading) {
     return (
@@ -352,7 +372,7 @@ const MONTHS = [
             <CardTitle className="flex items-center justify-between">
               <span>Daily Attendance - Full Month</span>
               <Badge variant="outline" className="text-sm">
-                {filteredPeople.length} people
+                {Object.values(groupedPeople).flat().length} people
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -389,36 +409,52 @@ const MONTHS = [
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPeople.map(person => {
-                    const stats = getPersonStats(person, currentMonth);
-                    return (
-                      <TableRow key={person.id} className="hover:bg-muted/50">
-                        <TableCell className="font-medium">{person.trigramme}</TableCell>
-                        <TableCell className="text-muted-foreground">{person.role}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="text-xs">
-                            {person.team}
-                          </Badge>
-                        </TableCell>
-                        {workingDays.map(day => {
-                          const dateKey = formatDateKey(day, currentMonth);
-                          const status = person.attendance[dateKey];
-                          return (
-                            <TableCell key={day} className={`text-center ${getSprintClass(day, currentMonth)}`}>
-                              <span className={`text-lg font-bold ${getStatusColor(status)}`}>
-                                {getStatusIcon(status)}
+                  {Object.entries(groupedPeople).map(([teamName, teamMembers]) => (
+                    <React.Fragment key={teamName}>
+                      {/* Team Header Row */}
+                      {selectedTeam === 'All' && (
+                        <TableRow className="bg-muted/30 hover:bg-muted/30">
+                          <TableCell colSpan={workingDays.length + 4} className="font-bold text-lg py-4">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-5 w-5 text-primary" />
+                              {teamName} ({teamMembers.length} members)
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      {/* Team Members */}
+                      {teamMembers.map(person => {
+                        const stats = getPersonStats(person, currentMonth);
+                        return (
+                          <TableRow key={person.id} className="hover:bg-muted/50">
+                            <TableCell className="font-medium">{person.trigramme}</TableCell>
+                            <TableCell className="text-muted-foreground">{person.role}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className="text-xs">
+                                {person.team}
+                              </Badge>
+                            </TableCell>
+                            {workingDays.map(day => {
+                              const dateKey = formatDateKey(day, currentMonth);
+                              const status = person.attendance[dateKey];
+                              return (
+                                <TableCell key={day} className={`text-center ${getSprintClass(day, currentMonth)}`}>
+                                  <span className={`text-lg font-bold ${getStatusColor(status)}`}>
+                                    {getStatusIcon(status)}
+                                  </span>
+                                </TableCell>
+                              );
+                            })}
+                            <TableCell className="text-center">
+                              <span className={`font-bold ${stats.rate >= 80 ? 'text-present' : stats.rate >= 60 ? 'text-warning' : 'text-absent'}`}>
+                                {stats.rate}%
                               </span>
                             </TableCell>
-                          );
-                        })}
-                        <TableCell className="text-center">
-                          <span className={`font-bold ${stats.rate >= 80 ? 'text-present' : stats.rate >= 60 ? 'text-warning' : 'text-absent'}`}>
-                            {stats.rate}%
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                          </TableRow>
+                        );
+                      })}
+                    </React.Fragment>
+                  ))}
                 </TableBody>
               </Table>
             </div>
