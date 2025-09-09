@@ -54,31 +54,28 @@ export type Database = {
           capacity: number | null
           created_at: string
           id: number
-          name: string | null
           nature: string | null
           role: string | null
-          surname: string | null
           team: string | null
+          trigramme: string | null
         }
         Insert: {
           capacity?: number | null
           created_at?: string
           id?: number
-          name?: string | null
           nature?: string | null
           role?: string | null
-          surname?: string | null
           team?: string | null
+          trigramme?: string | null
         }
         Update: {
           capacity?: number | null
           created_at?: string
           id?: number
-          name?: string | null
           nature?: string | null
           role?: string | null
-          surname?: string | null
           team?: string | null
+          trigramme?: string | null
         }
         Relationships: []
       }
