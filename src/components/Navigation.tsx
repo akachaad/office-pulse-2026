@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Settings } from 'lucide-react';
+import { Calendar, MapPin, Settings, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -35,6 +35,15 @@ export default function Navigation() {
       >
         <Settings className="h-4 w-4" />
         Admin Capacity
+      </Button>
+
+      <Button
+        variant={isActive('/admin/attendance') ? 'default' : 'outline'}
+        onClick={() => navigate('/admin/attendance')}
+        className="flex items-center gap-2 shadow-soft"
+      >
+        <Users className="h-4 w-4" />
+        Admin Attendance
       </Button>
     </div>
   );

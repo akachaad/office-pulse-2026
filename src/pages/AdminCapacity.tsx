@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,12 +17,13 @@ const AdminCapacity = () => {
   const { toast } = useToast();
 
   // Filter developers based on role or nature
-  const developers = people?.filter(person => 
-    person.role?.toLowerCase().includes('developer') || 
-    person.role?.toLowerCase().includes('dev') ||
-    person.nature?.toLowerCase().includes('developer') ||
-    person.nature?.toLowerCase().includes('dev')
-  ) || [];
+  const developers = useMemo(() => 
+    people?.filter(person => 
+      person.role?.toLowerCase().includes('developer') || 
+      person.role?.toLowerCase().includes('dev') ||
+      person.nature?.toLowerCase().includes('developer') ||
+      person.nature?.toLowerCase().includes('dev')
+    ) || [], [people]);
 
   useEffect(() => {
     if (developers.length > 0) {

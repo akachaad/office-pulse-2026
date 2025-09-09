@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import DeskReservation from "./pages/DeskReservation";
 import TrigrammeView from "./pages/TrigrammeView";
 import AdminCapacity from "./pages/AdminCapacity";
+import AdminAttendance from "./pages/AdminAttendance";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/desk-reservation" element={<DeskReservation />} />
           <Route path="/trigramme/:trigramme" element={<TrigrammeView />} />
           <Route path="/admin/capacity" element={<AdminCapacity />} />
+          <Route path="/admin/attendance" element={<AdminAttendance />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
