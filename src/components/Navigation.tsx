@@ -1,4 +1,4 @@
-import { Calendar, MapPin } from 'lucide-react';
+import { Calendar, MapPin, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -26,6 +26,15 @@ export default function Navigation() {
       >
         <MapPin className="h-4 w-4" />
         Desk Reservation
+      </Button>
+
+      <Button
+        variant={isActive('/admin/capacity') ? 'default' : 'outline'}
+        onClick={() => navigate('/admin/capacity')}
+        className="flex items-center gap-2 shadow-soft"
+      >
+        <Settings className="h-4 w-4" />
+        Admin Capacity
       </Button>
     </div>
   );
