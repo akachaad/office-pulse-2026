@@ -10,15 +10,16 @@ import { usePeople, Person } from '@/hooks/usePeople';
 import { useAttendance } from '@/hooks/useAttendance';
 import { supabase } from '@/integrations/supabase/client';
 import { CalendarIcon, Users, Save, Plus } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, eachDayOfInterval } from 'date-fns';
 import Navigation from '@/components/Navigation';
 import { cn } from '@/lib/utils';
+import type { DateRange } from 'react-day-picker';
 
 const AdminAttendance = () => {
   const { data: people, isLoading: peopleLoading } = usePeople();
   const { data: attendance, refetch: refetchAttendance } = useAttendance();
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>();
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -40,52 +41,65 @@ const AdminAttendance = () => {
   };
 
   const saveAttendance = async () => {
-    if (!selectedPerson || !selectedDate || !selectedStatus) {
+    if (!selectedPerson || !selectedDateRange?.from || !selectedStatus) {
       toast({
         title: "Error",
-        description: "Please select a person, date, and status",
+        description: "Please select a person, date range, and status",
         variant: "destructive",
       });
       return;
     }
 
     setSaving(true);
-    const dateStr = format(selectedDate, 'yyyy-MM-dd');
     
     try {
-      // Check if attendance record already exists
-      const existingRecord = getPersonCurrentStatus(selectedPerson, selectedDate);
-      
-      if (existingRecord) {
-        // Update existing record
-        const { error } = await supabase
-          .from('attendance')
-          .update({ status: selectedStatus })
-          .eq('id', existingRecord.id);
+      // Get all dates in the range
+      const dates = selectedDateRange.to 
+        ? eachDayOfInterval({ start: selectedDateRange.from, end: selectedDateRange.to })
+        : [selectedDateRange.from];
 
-        if (error) throw error;
-      } else {
-        // Create new record
-        const { error } = await supabase
-          .from('attendance')
-          .insert({
-            person_id: selectedPerson.id,
-            date: dateStr,
-            status: selectedStatus
-          });
+      // Process each date
+      for (const date of dates) {
+        const dateStr = format(date, 'yyyy-MM-dd');
+        
+        // Check if attendance record already exists
+        const existingRecord = getPersonCurrentStatus(selectedPerson, date);
+        
+        if (existingRecord) {
+          // Update existing record
+          const { error } = await supabase
+            .from('attendance')
+            .update({ status: selectedStatus })
+            .eq('id', existingRecord.id);
 
-        if (error) throw error;
+          if (error) throw error;
+        } else {
+          // Create new record
+          const { error } = await supabase
+            .from('attendance')
+            .insert({
+              person_id: selectedPerson.id,
+              date: dateStr,
+              status: selectedStatus
+            });
+
+          if (error) throw error;
+        }
       }
+
+      const dateText = selectedDateRange.to 
+        ? `${format(selectedDateRange.from, 'PPP')} - ${format(selectedDateRange.to, 'PPP')}`
+        : format(selectedDateRange.from, 'PPP');
 
       toast({
         title: "Success",
-        description: `Attendance updated for ${selectedPerson.trigramme}`,
+        description: `Attendance updated for ${selectedPerson.trigramme} (${dateText})`,
       });
       
       refetchAttendance();
       
       // Reset form
-      setSelectedDate(undefined);
+      setSelectedDateRange(undefined);
       setSelectedStatus('');
     } catch (error) {
       console.error('Error saving attendance:', error);
@@ -178,26 +192,35 @@ const AdminAttendance = () => {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Date</label>
+                <label className="text-sm font-medium">Date Range</label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !selectedDate && "text-muted-foreground"
+                        !selectedDateRange?.from && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+                      {selectedDateRange?.from ? (
+                        selectedDateRange.to ? (
+                          `${format(selectedDateRange.from, "PPP")} - ${format(selectedDateRange.to, "PPP")}`
+                        ) : (
+                          format(selectedDateRange.from, "PPP")
+                        )
+                      ) : (
+                        "Pick date range"
+                      )}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
+                      mode="range"
+                      selected={selectedDateRange}
+                      onSelect={setSelectedDateRange}
                       initialFocus
+                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
@@ -222,17 +245,23 @@ const AdminAttendance = () => {
                 </Select>
               </div>
 
-              {selectedPerson && selectedDate && (
+              {selectedPerson && selectedDateRange?.from && (
                 <div className="p-3 bg-secondary rounded-lg">
                   <div className="text-sm font-medium mb-2">Current Status:</div>
                   {(() => {
-                    const currentStatus = getPersonCurrentStatus(selectedPerson, selectedDate);
+                    // Show status for first date in range
+                    const currentStatus = getPersonCurrentStatus(selectedPerson, selectedDateRange.from);
                     if (currentStatus) {
                       const statusOption = statusOptions.find(s => s.value === currentStatus.status);
                       return (
                         <div className="flex items-center gap-2">
                           <div className={cn("w-3 h-3 rounded-full", statusOption?.color)} />
                           <span className="text-sm">{statusOption?.label || currentStatus.status}</span>
+                          {selectedDateRange.to && (
+                            <span className="text-xs text-muted-foreground ml-2">
+                              (showing first date)
+                            </span>
+                          )}
                         </div>
                       );
                     }
@@ -243,7 +272,7 @@ const AdminAttendance = () => {
 
               <Button
                 onClick={saveAttendance}
-                disabled={saving || !selectedPerson || !selectedDate || !selectedStatus}
+                disabled={saving || !selectedPerson || !selectedDateRange?.from || !selectedStatus}
                 className="w-full flex items-center gap-2"
               >
                 <Save className="h-4 w-4" />
@@ -259,9 +288,9 @@ const AdminAttendance = () => {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>• Select a team member from the grid above</p>
-            <p>• Choose a date using the calendar picker</p>
+            <p>• Choose a date or date range using the calendar picker</p>
             <p>• Select the appropriate attendance status</p>
-            <p>• Click Save to update the attendance record</p>
+            <p>• Click Save to update attendance for all selected dates</p>
             <p>• Existing records will be updated, new records will be created</p>
           </CardContent>
         </Card>
