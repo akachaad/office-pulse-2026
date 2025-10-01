@@ -10,6 +10,7 @@ import DeskReservation from "./pages/DeskReservation";
 import TrigrammeView from "./pages/TrigrammeView";
 import AdminCapacity from "./pages/AdminCapacity";
 import AdminAttendance from "./pages/AdminAttendance";
+import AdminWarnings from "./pages/AdminWarnings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +36,11 @@ const App = () => (
             <Route path="/admin/attendance" element={
               <ProtectedRoute requireRole="hr">
                 <AdminAttendance />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/warnings" element={
+              <ProtectedRoute requireRole="hr">
+                <AdminWarnings />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

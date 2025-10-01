@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Settings, Users, LogOut } from 'lucide-react';
+import { Calendar, MapPin, Settings, Users, LogOut, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -62,6 +62,15 @@ export default function Navigation() {
             >
               <Users className="h-4 w-4" />
               Admin Attendance
+            </Button>
+
+            <Button
+              variant={isActive('/admin/warnings') ? 'default' : 'outline'}
+              onClick={() => navigate('/admin/warnings')}
+              className="flex items-center gap-2 shadow-soft"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              Warnings
             </Button>
           </>
         )}
