@@ -210,9 +210,10 @@ const AdminCapacity = () => {
             <CardTitle className="text-sm font-medium">Guidelines</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>• <strong>Capacity 1.0:</strong> Full day availability</p>
+            <p>• <strong>Capacity 0.0:</strong> Not available (off, on leave, etc.)</p>
             <p>• <strong>Capacity 0.5:</strong> Half day availability</p>
             <p>• <strong>Capacity 0.8:</strong> 80% day availability</p>
+            <p>• <strong>Capacity 1.0:</strong> Full day availability</p>
             <p>• Only people with "developer" or "dev" in their role/nature are shown</p>
             <p>• Changes are saved immediately when you click the Save button</p>
           </CardContent>
