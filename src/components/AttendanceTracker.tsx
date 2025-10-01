@@ -342,7 +342,7 @@ export default function AttendanceTracker() {
                     <span>Attendance Rate</span>
                     <span className="text-primary">
                       {stats.present + stats.sickness + stats.holidays + stats.training + stats.homeworking > 0 
-                        ? Math.round((stats.present / (stats.present + stats.sickness + stats.holidays + stats.training + stats.homeworking)) * 100)
+                        ? Math.round(((stats.present + stats.homeworking) / (stats.present + stats.sickness + stats.holidays + stats.training + stats.homeworking)) * 100)
                         : 0}%
                     </span>
                   </div>
