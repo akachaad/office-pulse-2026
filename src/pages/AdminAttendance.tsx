@@ -14,6 +14,18 @@ import { format, eachDayOfInterval } from 'date-fns';
 import Navigation from '@/components/Navigation';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
+import { z } from 'zod';
+
+const attendanceSchema = z.object({
+  personId: z.number().positive('Invalid person selected'),
+  dateRange: z.object({
+    from: z.date(),
+    to: z.date().optional(),
+  }),
+  status: z.enum(['present', 'sickness', 'holidays', 'training', 'homeworking'], {
+    errorMap: () => ({ message: 'Invalid status selected' }),
+  }),
+});
 
 const AdminAttendance = () => {
   const { data: people, isLoading: peopleLoading } = usePeople();
@@ -48,6 +60,24 @@ const AdminAttendance = () => {
         variant: "destructive",
       });
       return;
+    }
+
+    // Validate input
+    try {
+      attendanceSchema.parse({
+        personId: selectedPerson.id,
+        dateRange: selectedDateRange,
+        status: selectedStatus,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Validation Error",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setSaving(true);
@@ -102,7 +132,6 @@ const AdminAttendance = () => {
       setSelectedDateRange(undefined);
       setSelectedStatus('');
     } catch (error) {
-      console.error('Error saving attendance:', error);
       toast({
         title: "Error",
         description: "Failed to save attendance",

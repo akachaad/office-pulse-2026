@@ -9,6 +9,11 @@ import { usePeople, Person } from '@/hooks/usePeople';
 import { supabase } from '@/integrations/supabase/client';
 import { Settings, Save, User } from 'lucide-react';
 import Navigation from '@/components/Navigation';
+import { z } from 'zod';
+
+const capacitySchema = z.number()
+  .min(0, 'Capacity must be at least 0')
+  .max(1, 'Capacity cannot exceed 1');
 
 const AdminCapacity = () => {
   const { data: people, isLoading, refetch } = usePeople();
@@ -37,15 +42,39 @@ const AdminCapacity = () => {
 
   const handleCapacityChange = (personId: number, value: string) => {
     const numValue = parseFloat(value);
-    if (!isNaN(numValue) && numValue >= 0 && numValue <= 1) {
-      setCapacities(prev => ({
-        ...prev,
-        [personId]: numValue
-      }));
+    if (!isNaN(numValue)) {
+      try {
+        capacitySchema.parse(numValue);
+        setCapacities(prev => ({
+          ...prev,
+          [personId]: numValue
+        }));
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          toast({
+            title: "Invalid Input",
+            description: error.errors[0].message,
+            variant: "destructive",
+          });
+        }
+      }
     }
   };
 
   const saveCapacity = async (personId: number) => {
+    try {
+      capacitySchema.parse(capacities[personId]);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Validation Error",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSaving(prev => new Set(prev).add(personId));
     
     try {
@@ -63,7 +92,6 @@ const AdminCapacity = () => {
       
       refetch();
     } catch (error) {
-      console.error('Error updating capacity:', error);
       toast({
         title: "Error",
         description: "Failed to update capacity",
