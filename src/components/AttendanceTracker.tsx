@@ -31,8 +31,17 @@ export default function AttendanceTracker() {
   
   // Find the person associated with the current user
   const currentPerson = useMemo(() => {
-    if (!user || !people) return null;
-    return people.find(p => p.user_id === user.id);
+    if (!user || !people) {
+      console.log('AttendanceTracker: No user or people data', { user: !!user, people: !!people });
+      return null;
+    }
+    const person = people.find(p => p.user_id === user.id);
+    console.log('AttendanceTracker: Current person lookup', { 
+      userId: user.id, 
+      peopleCount: people.length,
+      foundPerson: person?.trigramme 
+    });
+    return person;
   }, [user, people]);
 
   const getDaysInMonth = (month: number, year: number = 2025) => {
@@ -110,10 +119,22 @@ export default function AttendanceTracker() {
   };
 
   const toggleAttendance = (day: number, month: number, year: number) => {
-    if (isNonWorkingDay(day, month, year) || !currentPerson) return;
+    console.log('toggleAttendance called', { day, month, year, currentPerson: currentPerson?.trigramme });
+    
+    if (isNonWorkingDay(day, month, year)) {
+      console.log('Day is non-working, ignoring');
+      return;
+    }
+    
+    if (!currentPerson) {
+      console.error('No current person found - user may not be linked to a person record');
+      return;
+    }
     
     const dateKey = formatDateKey(day, month, year);
     const currentStatus = getAttendanceForDay(dateKey);
+    
+    console.log('Current status for day', { dateKey, currentStatus });
     
     let newStatus: AttendanceStatus;
     if (currentStatus === null || currentStatus === undefined) {
@@ -129,6 +150,8 @@ export default function AttendanceTracker() {
     } else {
       newStatus = null;
     }
+    
+    console.log('Updating attendance', { personId: currentPerson.id, dateKey, newStatus });
     
     updateAttendanceMutation.mutate({
       personId: currentPerson.id,
@@ -225,6 +248,20 @@ export default function AttendanceTracker() {
           <p className="text-muted-foreground text-lg">
             Track office presence for {currentYear}
           </p>
+          {!currentPerson && user && (
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 max-w-md mx-auto">
+              <p className="text-destructive text-sm font-medium">
+                Your account is not linked to a person record. Please contact an administrator to link your account.
+              </p>
+            </div>
+          )}
+          {currentPerson && (
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 max-w-md mx-auto">
+              <p className="text-sm">
+                Editing attendance for: <span className="font-bold">{currentPerson.trigramme}</span> ({currentPerson.role})
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
