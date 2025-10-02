@@ -109,17 +109,32 @@ export default function AttendanceTracker() {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
-  const getAttendanceForDay = (dateKey: string): AttendanceStatus => {
-    if (!currentPerson || !attendanceRecords) return null;
+  const getAttendanceForDay = (dateKey: string): {
+    morning: AttendanceStatus;
+    afternoon: AttendanceStatus;
+    fullDay: AttendanceStatus;
+  } => {
+    if (!currentPerson || !attendanceRecords) {
+      return { morning: null, afternoon: null, fullDay: null };
+    }
     
-    const record = attendanceRecords.find(
+    const records = attendanceRecords.filter(
       a => a.person_id === currentPerson.id && a.date === dateKey
     );
-    return (record?.status as AttendanceStatus) || null;
+    
+    const morningRecord = records.find(r => r.period === 'morning');
+    const afternoonRecord = records.find(r => r.period === 'afternoon');
+    const fullDayRecord = records.find(r => r.period === 'full_day');
+    
+    return {
+      morning: (morningRecord?.status as AttendanceStatus) || null,
+      afternoon: (afternoonRecord?.status as AttendanceStatus) || null,
+      fullDay: (fullDayRecord?.status as AttendanceStatus) || null
+    };
   };
 
-  const toggleAttendance = (day: number, month: number, year: number) => {
-    console.log('toggleAttendance called', { day, month, year, currentPerson: currentPerson?.trigramme });
+  const toggleAttendance = (day: number, month: number, year: number, period: 'morning' | 'afternoon' | 'full_day') => {
+    console.log('toggleAttendance called', { day, month, year, period, currentPerson: currentPerson?.trigramme });
     
     if (isNonWorkingDay(day, month, year)) {
       console.log('Day is non-working, ignoring');
@@ -132,9 +147,18 @@ export default function AttendanceTracker() {
     }
     
     const dateKey = formatDateKey(day, month, year);
-    const currentStatus = getAttendanceForDay(dateKey);
+    const attendance = getAttendanceForDay(dateKey);
     
-    console.log('Current status for day', { dateKey, currentStatus });
+    let currentStatus: AttendanceStatus;
+    if (period === 'morning') {
+      currentStatus = attendance.morning;
+    } else if (period === 'afternoon') {
+      currentStatus = attendance.afternoon;
+    } else {
+      currentStatus = attendance.fullDay;
+    }
+    
+    console.log('Current status for day', { dateKey, period, currentStatus });
     
     let newStatus: AttendanceStatus;
     if (currentStatus === null || currentStatus === undefined) {
@@ -151,12 +175,43 @@ export default function AttendanceTracker() {
       newStatus = null;
     }
     
-    console.log('Updating attendance', { personId: currentPerson.id, dateKey, newStatus });
+    console.log('Updating attendance', { personId: currentPerson.id, dateKey, period, newStatus });
+    
+    // If setting a half-day status, clear full-day status if it exists
+    if (period !== 'full_day' && attendance.fullDay) {
+      updateAttendanceMutation.mutate({
+        personId: currentPerson.id,
+        date: dateKey,
+        status: null,
+        period: 'full_day',
+      });
+    }
+    
+    // If setting full-day status, clear half-day statuses if they exist
+    if (period === 'full_day' && (attendance.morning || attendance.afternoon)) {
+      if (attendance.morning) {
+        updateAttendanceMutation.mutate({
+          personId: currentPerson.id,
+          date: dateKey,
+          status: null,
+          period: 'morning',
+        });
+      }
+      if (attendance.afternoon) {
+        updateAttendanceMutation.mutate({
+          personId: currentPerson.id,
+          date: dateKey,
+          status: null,
+          period: 'afternoon',
+        });
+      }
+    }
     
     updateAttendanceMutation.mutate({
       personId: currentPerson.id,
       date: dateKey,
       status: newStatus,
+      period,
     });
   };
 
@@ -181,6 +236,22 @@ export default function AttendanceTracker() {
     return { present, sickness, holidays, training, homeworking, total: weekdays, unmarked: weekdays - present - sickness - holidays - training - homeworking };
   };
 
+  const getStatusClasses = (status: AttendanceStatus) => {
+    if (status === 'present') {
+      return "bg-present text-present-foreground shadow-soft hover:shadow-medium";
+    } else if (status === 'sickness') {
+      return "bg-sickness text-sickness-foreground shadow-soft hover:shadow-medium";
+    } else if (status === 'holidays') {
+      return "bg-holidays text-holidays-foreground shadow-soft hover:shadow-medium";
+    } else if (status === 'training') {
+      return "bg-training text-training-foreground shadow-soft hover:shadow-medium";
+    } else if (status === 'homeworking') {
+      return "bg-homeworking text-homeworking-foreground shadow-soft hover:shadow-medium";
+    } else {
+      return "bg-card border-border hover:border-primary hover:shadow-soft";
+    }
+  };
+
   const renderCalendarGrid = () => {
     const daysInMonth = getDaysInMonth(currentMonth, currentYear);
     const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
@@ -194,36 +265,52 @@ export default function AttendanceTracker() {
     // Days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const dateKey = formatDateKey(day, currentMonth, currentYear);
-      const status = getAttendanceForDay(dateKey);
+      const attendance = getAttendanceForDay(dateKey);
       const nonWorkingDay = isNonWorkingDay(day, currentMonth, currentYear);
-      
-      let dayClasses = "aspect-square flex items-center justify-center text-sm font-medium cursor-pointer transition-all duration-200 rounded-lg border-2 border-transparent";
+      const hasFullDay = attendance.fullDay !== null;
+      const hasMorning = attendance.morning !== null;
+      const hasAfternoon = attendance.afternoon !== null;
       
       if (nonWorkingDay) {
-        dayClasses += " bg-weekend text-weekend-foreground cursor-not-allowed";
-      } else if (status === 'present') {
-        dayClasses += " bg-present text-present-foreground shadow-soft hover:shadow-medium";
-      } else if (status === 'sickness') {
-        dayClasses += " bg-sickness text-sickness-foreground shadow-soft hover:shadow-medium";
-      } else if (status === 'holidays') {
-        dayClasses += " bg-holidays text-holidays-foreground shadow-soft hover:shadow-medium";
-      } else if (status === 'training') {
-        dayClasses += " bg-training text-training-foreground shadow-soft hover:shadow-medium";
-      } else if (status === 'homeworking') {
-        dayClasses += " bg-homeworking text-homeworking-foreground shadow-soft hover:shadow-medium";
+        days.push(
+          <div
+            key={day}
+            className="aspect-square flex items-center justify-center text-sm font-medium bg-weekend text-weekend-foreground cursor-not-allowed rounded-lg border-2 border-transparent"
+          >
+            {day}
+          </div>
+        );
+      } else if (hasFullDay) {
+        days.push(
+          <div
+            key={day}
+            className={`aspect-square flex items-center justify-center text-sm font-medium cursor-pointer transition-all duration-200 rounded-lg border-2 border-transparent ${getStatusClasses(attendance.fullDay)}`}
+            onClick={() => toggleAttendance(day, currentMonth, currentYear, 'full_day')}
+          >
+            {day}
+          </div>
+        );
       } else {
-        dayClasses += " bg-card border-border hover:border-primary hover:shadow-soft hover:scale-105";
+        // Split day view for half-day attendance
+        days.push(
+          <div key={day} className="aspect-square flex flex-col rounded-lg border-2 border-transparent overflow-hidden">
+            <div
+              className={`flex-1 flex items-center justify-center text-xs font-medium cursor-pointer transition-all duration-200 border-b ${getStatusClasses(attendance.morning)}`}
+              onClick={() => toggleAttendance(day, currentMonth, currentYear, 'morning')}
+              title="Morning"
+            >
+              {hasMorning ? '●' : day}
+            </div>
+            <div
+              className={`flex-1 flex items-center justify-center text-xs font-medium cursor-pointer transition-all duration-200 ${getStatusClasses(attendance.afternoon)}`}
+              onClick={() => toggleAttendance(day, currentMonth, currentYear, 'afternoon')}
+              title="Afternoon"
+            >
+              {hasAfternoon ? '●' : ''}
+            </div>
+          </div>
+        );
       }
-
-      days.push(
-        <div
-          key={day}
-          className={dayClasses}
-          onClick={() => toggleAttendance(day, currentMonth, currentYear)}
-        >
-          {day}
-        </div>
-      );
     }
 
     return days;
