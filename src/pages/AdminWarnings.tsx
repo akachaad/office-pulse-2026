@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -30,7 +30,14 @@ const AdminWarnings = () => {
   
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
-  const [capacityLimit, setCapacityLimit] = useState<number>(50);
+  const [capacityLimit, setCapacityLimit] = useState<number>(() => {
+    const saved = localStorage.getItem('capacityLimit');
+    return saved ? parseInt(saved) : 50;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('capacityLimit', capacityLimit.toString());
+  }, [capacityLimit]);
   
   const { data: attendance, isLoading: attendanceLoading } = useAttendance(selectedMonth, selectedYear);
   const { data: people, isLoading: peopleLoading } = usePeople();
