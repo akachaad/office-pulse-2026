@@ -128,12 +128,47 @@ const TrigrammeView = () => {
       }
     }
     
+    // Update the current period
     updateAttendanceMutation.mutate({
       personId: person.id,
       date: format(date, 'yyyy-MM-dd'),
       status: nextStatus,
       period,
     });
+    
+    // Check if both half days now have the same status and merge them
+    setTimeout(() => {
+      const updatedAttendance = getAttendanceForDay(date);
+      const morningStatus = period === 'morning' ? nextStatus : updatedAttendance.morning.status;
+      const afternoonStatus = period === 'afternoon' ? nextStatus : updatedAttendance.afternoon.status;
+      
+      if (morningStatus && afternoonStatus && morningStatus === afternoonStatus && morningStatus !== null) {
+        // Both halves have the same status, merge into full day
+        console.log('Merging half days into full day', { date: format(date, 'yyyy-MM-dd'), status: morningStatus });
+        
+        // Delete both half-day records
+        updateAttendanceMutation.mutate({
+          personId: person.id,
+          date: format(date, 'yyyy-MM-dd'),
+          status: null,
+          period: 'morning',
+        });
+        updateAttendanceMutation.mutate({
+          personId: person.id,
+          date: format(date, 'yyyy-MM-dd'),
+          status: null,
+          period: 'afternoon',
+        });
+        
+        // Create full-day record
+        updateAttendanceMutation.mutate({
+          personId: person.id,
+          date: format(date, 'yyyy-MM-dd'),
+          status: morningStatus,
+          period: 'full_day',
+        });
+      }
+    }, 100);
   };
 
   const getStatusColor = (status: AttendanceStatus | null) => {

@@ -207,12 +207,47 @@ export default function AttendanceTracker() {
       }
     }
     
+    // Update the current period
     updateAttendanceMutation.mutate({
       personId: currentPerson.id,
       date: dateKey,
       status: newStatus,
       period,
     });
+    
+    // Check if both half days now have the same status and merge them
+    setTimeout(() => {
+      const updatedAttendance = getAttendanceForDay(dateKey);
+      const morningStatus = period === 'morning' ? newStatus : updatedAttendance.morning;
+      const afternoonStatus = period === 'afternoon' ? newStatus : updatedAttendance.afternoon;
+      
+      if (morningStatus && afternoonStatus && morningStatus === afternoonStatus && morningStatus !== null) {
+        // Both halves have the same status, merge into full day
+        console.log('Merging half days into full day', { dateKey, status: morningStatus });
+        
+        // Delete both half-day records
+        updateAttendanceMutation.mutate({
+          personId: currentPerson.id,
+          date: dateKey,
+          status: null,
+          period: 'morning',
+        });
+        updateAttendanceMutation.mutate({
+          personId: currentPerson.id,
+          date: dateKey,
+          status: null,
+          period: 'afternoon',
+        });
+        
+        // Create full-day record
+        updateAttendanceMutation.mutate({
+          personId: currentPerson.id,
+          date: dateKey,
+          status: morningStatus,
+          period: 'full_day',
+        });
+      }
+    }, 100);
   };
 
   const getAttendanceStats = () => {
