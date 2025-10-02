@@ -10,7 +10,7 @@ export interface AttendanceRecord {
   updated_at: string;
 }
 
-export const useAttendance = (month?: number, year: number = 2026) => {
+export const useAttendance = (month?: number, year: number = 2025) => {
   return useQuery({
     queryKey: ['attendance', month, year],
     queryFn: async () => {

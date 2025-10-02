@@ -18,7 +18,8 @@ interface PersonWithAttendance {
 }
 
 export default function ConsolidatedView() {
-  const [currentMonth, setCurrentMonth] = useState(0); // 0 = January 2026
+  const [currentMonth, setCurrentMonth] = useState(9); // 9 = October 2025
+  const [currentYear, setCurrentYear] = useState(2025);
   const [selectedTeam, setSelectedTeam] = useState<string>('All');
   
   const { data: peopleData, isLoading: peopleLoading } = usePeople();
@@ -93,21 +94,21 @@ export default function ConsolidatedView() {
     );
   }
 
-  const getDaysInMonth = (month: number, year: number = 2026) => {
+  const getDaysInMonth = (month: number, year: number = 2025) => {
     return new Date(year, month + 1, 0).getDate();
   };
 
-  const isWeekend = (day: number, month: number, year: number = 2026) => {
+  const isWeekend = (day: number, month: number, year: number = 2025) => {
     const date = new Date(year, month, day);
     const dayOfWeek = date.getDay();
     return dayOfWeek === 0 || dayOfWeek === 6;
   };
 
-  const formatDateKey = (day: number, month: number, year: number = 2026) => {
+  const formatDateKey = (day: number, month: number, year: number = 2025) => {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
-  const isFrenchBankHoliday = (day: number, month: number, year: number = 2026) => {
+  const isFrenchBankHoliday = (day: number, month: number, year: number = 2025) => {
     // Fixed holidays
     const fixedHolidays = [
       { month: 0, day: 1 },   // New Year's Day
@@ -124,9 +125,9 @@ export default function ConsolidatedView() {
       return true;
     }
 
-    // Calculate Easter for variable holidays (2026)
-    if (year === 2026) {
-      const easterDate = new Date(2026, 3, 5); // Easter Sunday April 5, 2026
+    // Calculate Easter for variable holidays (2025)
+    if (year === 2025) {
+      const easterDate = new Date(2025, 3, 20); // Easter Sunday April 20, 2025
       
       // Easter Monday (day after Easter)
       const easterMonday = new Date(easterDate);
@@ -150,24 +151,24 @@ export default function ConsolidatedView() {
     return false;
   };
 
-  const isNonWorkingDay = (day: number, month: number, year: number = 2026) => {
+  const isNonWorkingDay = (day: number, month: number, year: number = 2025) => {
     return isWeekend(day, month, year) || isFrenchBankHoliday(day, month, year);
   };
 
-  const getWorkingDays = (month: number) => {
-    const daysInMonth = getDaysInMonth(month);
+  const getWorkingDays = (month: number, year: number) => {
+    const daysInMonth = getDaysInMonth(month, year);
     const workingDays = [];
     
     for (let day = 1; day <= daysInMonth; day++) {
-      if (!isNonWorkingDay(day, month)) {
+      if (!isNonWorkingDay(day, month, year)) {
         workingDays.push(day);
       }
     }
     return workingDays;
   };
 
-  const getPersonStats = (person: PersonWithAttendance, month: number) => {
-    const monthKey = `2026-${String(month + 1).padStart(2, '0')}`;
+  const getPersonStats = (person: PersonWithAttendance, month: number, year: number) => {
+    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
     const monthAttendance = Object.entries(person.attendance).filter(([date]) => 
       date.startsWith(monthKey)
     );
@@ -201,9 +202,9 @@ export default function ConsolidatedView() {
   };
 
   // Sprint calculation functions
-  const getSprintInfo = (day: number, month: number, year: number = 2026) => {
+  const getSprintInfo = (day: number, month: number, year: number = 2025) => {
     const date = new Date(year, month, day);
-    const sprintStartDate = new Date(2026, 0, 5); // January 5th, 2026
+    const sprintStartDate = new Date(2025, 9, 6); // October 6th, 2025
     
     // Calculate days since sprint start
     const daysSinceStart = Math.floor((date.getTime() - sprintStartDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -250,7 +251,7 @@ export default function ConsolidatedView() {
     const sprintHeaders: { [key: number]: { sprintNumber: number; isStart: boolean; isEnd: boolean } } = {};
     
     workingDays.forEach(day => {
-      const sprintInfo = getSprintInfo(day, currentMonth);
+      const sprintInfo = getSprintInfo(day, currentMonth, currentYear);
       if (sprintInfo.sprintNumber > 0) {
         sprintHeaders[day] = {
           sprintNumber: sprintInfo.sprintNumber,
@@ -268,7 +269,7 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-  const workingDays = getWorkingDays(currentMonth);
+  const workingDays = getWorkingDays(currentMonth, currentYear);
   const sprintHeaders = getSprintHeaderInfo(workingDays);
 
   return (
@@ -294,22 +295,34 @@ const MONTHS = [
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentMonth(Math.max(0, currentMonth - 1))}
-              disabled={currentMonth === 0}
+              onClick={() => {
+                if (currentMonth === 0) {
+                  setCurrentMonth(11);
+                  setCurrentYear(currentYear - 1);
+                } else {
+                  setCurrentMonth(currentMonth - 1);
+                }
+              }}
               className="hover:shadow-soft"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             
             <h2 className="text-xl font-bold min-w-[160px] text-center">
-              {MONTHS[currentMonth]} 2026
+              {MONTHS[currentMonth]} {currentYear}
             </h2>
             
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentMonth(Math.min(11, currentMonth + 1))}
-              disabled={currentMonth === 11}
+              onClick={() => {
+                if (currentMonth === 11) {
+                  setCurrentMonth(0);
+                  setCurrentYear(currentYear + 1);
+                } else {
+                  setCurrentMonth(currentMonth + 1);
+                }
+              }}
               className="hover:shadow-soft"
             >
               <ChevronRight className="h-4 w-4" />
@@ -424,7 +437,7 @@ const MONTHS = [
                       )}
                       {/* Team Members */}
                       {teamMembers.map(person => {
-                        const stats = getPersonStats(person, currentMonth);
+                        const stats = getPersonStats(person, currentMonth, currentYear);
                         return (
                           <TableRow key={person.id} className="hover:bg-muted/50">
                             <TableCell className="font-medium">{person.trigramme}</TableCell>
@@ -435,7 +448,7 @@ const MONTHS = [
                               </Badge>
                             </TableCell>
                             {workingDays.map(day => {
-                              const dateKey = formatDateKey(day, currentMonth);
+                              const dateKey = formatDateKey(day, currentMonth, currentYear);
                               const status = person.attendance[dateKey];
                               return (
                                 <TableCell key={day} className={`text-center ${getSprintClass(day, currentMonth)}`}>
@@ -466,11 +479,11 @@ const MONTHS = [
           {teams.filter(team => team !== 'All').map(team => {
             const teamPeople = people.filter(p => p.team === team);
             const totalPresent = teamPeople.reduce((acc, person) => {
-              const stats = getPersonStats(person, currentMonth);
+              const stats = getPersonStats(person, currentMonth, currentYear);
               return acc + stats.present;
             }, 0);
             const totalPossible = teamPeople.reduce((acc, person) => {
-              const stats = getPersonStats(person, currentMonth);
+              const stats = getPersonStats(person, currentMonth, currentYear);
               return acc + stats.total;
             }, 0);
             const teamRate = totalPossible > 0 ? Math.round((totalPresent / totalPossible) * 100) : 0;

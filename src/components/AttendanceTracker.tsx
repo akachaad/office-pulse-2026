@@ -20,25 +20,26 @@ const MONTHS = [
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function AttendanceTracker() {
-  const [currentMonth, setCurrentMonth] = useState(0); // 0 = January 2026
+  const [currentMonth, setCurrentMonth] = useState(9); // 9 = October 2025
+  const [currentYear, setCurrentYear] = useState(2025);
   const [attendance, setAttendance] = useState<AttendanceData>({});
   const [activeTab, setActiveTab] = useState("individual");
 
-  const getDaysInMonth = (month: number, year: number = 2026) => {
+  const getDaysInMonth = (month: number, year: number = 2025) => {
     return new Date(year, month + 1, 0).getDate();
   };
 
-  const getFirstDayOfMonth = (month: number, year: number = 2026) => {
+  const getFirstDayOfMonth = (month: number, year: number = 2025) => {
     return new Date(year, month, 1).getDay();
   };
 
-  const isWeekend = (day: number, month: number, year: number = 2026) => {
+  const isWeekend = (day: number, month: number, year: number = 2025) => {
     const date = new Date(year, month, day);
     const dayOfWeek = date.getDay();
     return dayOfWeek === 0 || dayOfWeek === 6; // Sunday or Saturday
   };
 
-  const isFrenchBankHoliday = (day: number, month: number, year: number = 2026) => {
+  const isFrenchBankHoliday = (day: number, month: number, year: number = 2025) => {
     // Fixed holidays
     const fixedHolidays = [
       { month: 0, day: 1 },   // New Year's Day
@@ -55,9 +56,9 @@ export default function AttendanceTracker() {
       return true;
     }
 
-    // Calculate Easter for variable holidays (2026)
-    if (year === 2026) {
-      const easterDate = new Date(2026, 3, 5); // Easter Sunday April 5, 2026
+    // Calculate Easter for variable holidays (2025)
+    if (year === 2025) {
+      const easterDate = new Date(2025, 3, 20); // Easter Sunday April 20, 2025
       
       // Easter Monday (day after Easter)
       const easterMonday = new Date(easterDate);
@@ -81,18 +82,18 @@ export default function AttendanceTracker() {
     return false;
   };
 
-  const isNonWorkingDay = (day: number, month: number, year: number = 2026) => {
+  const isNonWorkingDay = (day: number, month: number, year: number = 2025) => {
     return isWeekend(day, month, year) || isFrenchBankHoliday(day, month, year);
   };
 
-  const formatDateKey = (day: number, month: number, year: number = 2026) => {
+  const formatDateKey = (day: number, month: number, year: number = 2025) => {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
-  const toggleAttendance = (day: number, month: number) => {
-    if (isNonWorkingDay(day, month)) return; // Don't allow marking non-working days
+  const toggleAttendance = (day: number, month: number, year: number) => {
+    if (isNonWorkingDay(day, month, year)) return; // Don't allow marking non-working days
     
-    const dateKey = formatDateKey(day, month);
+    const dateKey = formatDateKey(day, month, year);
     const currentStatus = attendance[dateKey];
     
     let newStatus: AttendanceStatus;
@@ -117,7 +118,7 @@ export default function AttendanceTracker() {
   };
 
   const getAttendanceStats = () => {
-    const monthKey = `2026-${String(currentMonth + 1).padStart(2, '0')}`;
+    const monthKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
     const monthAttendance = Object.entries(attendance).filter(([date]) => 
       date.startsWith(monthKey)
     );
@@ -127,16 +128,16 @@ export default function AttendanceTracker() {
     const holidays = monthAttendance.filter(([, status]) => status === 'holidays').length;
     const training = monthAttendance.filter(([, status]) => status === 'training').length;
     const homeworking = monthAttendance.filter(([, status]) => status === 'homeworking').length;
-    const total = getDaysInMonth(currentMonth);
+    const total = getDaysInMonth(currentMonth, currentYear);
     const weekdays = Array.from({ length: total }, (_, i) => i + 1)
-      .filter(day => !isNonWorkingDay(day, currentMonth)).length;
+      .filter(day => !isNonWorkingDay(day, currentMonth, currentYear)).length;
     
     return { present, sickness, holidays, training, homeworking, total: weekdays, unmarked: weekdays - present - sickness - holidays - training - homeworking };
   };
 
   const renderCalendarGrid = () => {
-    const daysInMonth = getDaysInMonth(currentMonth);
-    const firstDay = getFirstDayOfMonth(currentMonth);
+    const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+    const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
     const days = [];
 
     // Empty cells for days before the first day of the month
@@ -146,9 +147,9 @@ export default function AttendanceTracker() {
 
     // Days of the month
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateKey = formatDateKey(day, currentMonth);
+      const dateKey = formatDateKey(day, currentMonth, currentYear);
       const status = attendance[dateKey];
-      const nonWorkingDay = isNonWorkingDay(day, currentMonth);
+      const nonWorkingDay = isNonWorkingDay(day, currentMonth, currentYear);
       
       let dayClasses = "aspect-square flex items-center justify-center text-sm font-medium cursor-pointer transition-all duration-200 rounded-lg border-2 border-transparent";
       
@@ -172,7 +173,7 @@ export default function AttendanceTracker() {
         <div
           key={day}
           className={dayClasses}
-          onClick={() => toggleAttendance(day, currentMonth)}
+          onClick={() => toggleAttendance(day, currentMonth, currentYear)}
         >
           {day}
         </div>
@@ -199,7 +200,7 @@ export default function AttendanceTracker() {
             </h1>
           </div>
           <p className="text-muted-foreground text-lg">
-            Track office presence for 2026
+            Track office presence for {currentYear}
           </p>
         </div>
 
@@ -225,22 +226,34 @@ export default function AttendanceTracker() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentMonth(Math.max(0, currentMonth - 1))}
-                disabled={currentMonth === 0}
+                onClick={() => {
+                  if (currentMonth === 0) {
+                    setCurrentMonth(11);
+                    setCurrentYear(currentYear - 1);
+                  } else {
+                    setCurrentMonth(currentMonth - 1);
+                  }
+                }}
                 className="hover:shadow-soft"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               
               <CardTitle className="text-2xl font-bold">
-                {MONTHS[currentMonth]} 2026
+                {MONTHS[currentMonth]} {currentYear}
               </CardTitle>
               
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentMonth(Math.min(11, currentMonth + 1))}
-                disabled={currentMonth === 11}
+                onClick={() => {
+                  if (currentMonth === 11) {
+                    setCurrentMonth(0);
+                    setCurrentYear(currentYear + 1);
+                  } else {
+                    setCurrentMonth(currentMonth + 1);
+                  }
+                }}
                 className="hover:shadow-soft"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -363,11 +376,11 @@ export default function AttendanceTracker() {
                     variant="outline" 
                     className="w-full justify-start hover:shadow-soft"
                     onClick={() => {
-                      const daysInMonth = getDaysInMonth(currentMonth);
+                      const daysInMonth = getDaysInMonth(currentMonth, currentYear);
                       const newAttendance = { ...attendance };
                       for (let day = 1; day <= daysInMonth; day++) {
-                        if (!isNonWorkingDay(day, currentMonth)) {
-                          const dateKey = formatDateKey(day, currentMonth);
+                        if (!isNonWorkingDay(day, currentMonth, currentYear)) {
+                          const dateKey = formatDateKey(day, currentMonth, currentYear);
                           newAttendance[dateKey] = 'present';
                         }
                       }
@@ -380,11 +393,11 @@ export default function AttendanceTracker() {
                     variant="outline" 
                     className="w-full justify-start hover:shadow-soft"
                     onClick={() => {
-                      const daysInMonth = getDaysInMonth(currentMonth);
+                      const daysInMonth = getDaysInMonth(currentMonth, currentYear);
                       const newAttendance = { ...attendance };
                       for (let day = 1; day <= daysInMonth; day++) {
-                        if (!isNonWorkingDay(day, currentMonth)) {
-                          const dateKey = formatDateKey(day, currentMonth);
+                        if (!isNonWorkingDay(day, currentMonth, currentYear)) {
+                          const dateKey = formatDateKey(day, currentMonth, currentYear);
                           newAttendance[dateKey] = null;
                         }
                       }
@@ -407,13 +420,13 @@ export default function AttendanceTracker() {
                           size="sm"
                           className="text-xs hover:shadow-soft hover:bg-homeworking-light"
                           onClick={() => {
-                            const daysInMonth = getDaysInMonth(currentMonth);
+                            const daysInMonth = getDaysInMonth(currentMonth, currentYear);
                             const newAttendance = { ...attendance };
                             for (let day = 1; day <= daysInMonth; day++) {
-                              if (!isNonWorkingDay(day, currentMonth)) {
-                                const date = new Date(2026, currentMonth, day);
+                              if (!isNonWorkingDay(day, currentMonth, currentYear)) {
+                                const date = new Date(currentYear, currentMonth, day);
                                 if (date.getDay() === weekdayIndex) {
-                                  const dateKey = formatDateKey(day, currentMonth);
+                                  const dateKey = formatDateKey(day, currentMonth, currentYear);
                                   newAttendance[dateKey] = 'homeworking';
                                 }
                               }
