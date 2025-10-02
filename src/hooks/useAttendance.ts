@@ -18,10 +18,10 @@ export const useAttendance = (month?: number, year: number = 2025) => {
       let query = supabase.from('attendance').select('*');
       
       if (month !== undefined) {
-        const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+        const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
         // Calculate the last day of the month correctly
-        const lastDay = new Date(year, month + 1, 0).getDate();
-        const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        const lastDay = new Date(year, month, 0).getDate();
+        const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
         query = query.gte('date', startDate).lte('date', endDate);
       }
       
