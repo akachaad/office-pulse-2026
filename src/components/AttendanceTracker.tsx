@@ -262,16 +262,46 @@ export default function AttendanceTracker() {
 
     const monthAttendance = attendanceRecords.filter(a => a.person_id === currentPerson.id);
     
-    const present = monthAttendance.filter(a => a.status === 'present').length;
-    const sickness = monthAttendance.filter(a => a.status === 'sickness').length;
-    const holidays = monthAttendance.filter(a => a.status === 'holidays').length;
-    const training = monthAttendance.filter(a => a.status === 'training').length;
-    const homeworking = monthAttendance.filter(a => a.status === 'homeworking').length;
+    // Group by date to handle half-days correctly
+    const dateMap: Record<string, { morning: string | null; afternoon: string | null; fullDay: string | null }> = {};
+    monthAttendance.forEach(record => {
+      if (!dateMap[record.date]) {
+        dateMap[record.date] = { morning: null, afternoon: null, fullDay: null };
+      }
+      if (record.period === 'morning') {
+        dateMap[record.date].morning = record.status;
+      } else if (record.period === 'afternoon') {
+        dateMap[record.date].afternoon = record.status;
+      } else if (record.period === 'full_day') {
+        dateMap[record.date].fullDay = record.status;
+      }
+    });
+    
+    // Count statuses (0.5 for half-days, 1 for full days)
+    let present = 0, sickness = 0, holidays = 0, training = 0, homeworking = 0;
+    
+    Object.values(dateMap).forEach(({ morning, afternoon, fullDay }) => {
+      const countStatus = (status: string | null, isMorning = false, isAfternoon = false) => {
+        const increment = (fullDay === status) ? 1 : 
+                         ((morning === status ? 0.5 : 0) + (afternoon === status ? 0.5 : 0));
+        return increment;
+      };
+      
+      present += countStatus('present');
+      sickness += countStatus('sickness');
+      holidays += countStatus('holidays');
+      training += countStatus('training');
+      homeworking += countStatus('homeworking');
+    });
+    
     const total = getDaysInMonth(currentMonth, currentYear);
     const weekdays = Array.from({ length: total }, (_, i) => i + 1)
       .filter(day => !isNonWorkingDay(day, currentMonth, currentYear)).length;
     
-    return { present, sickness, holidays, training, homeworking, total: weekdays, unmarked: weekdays - present - sickness - holidays - training - homeworking };
+    const marked = present + sickness + holidays + training + homeworking;
+    const unmarked = Math.max(0, weekdays - marked);
+    
+    return { present, sickness, holidays, training, homeworking, total: weekdays, unmarked };
   };
 
   const getStatusClasses = (status: AttendanceStatus) => {
