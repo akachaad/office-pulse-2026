@@ -38,7 +38,10 @@ export const useCreateRecurrentAttendance = () => {
     mutationFn: async (data: { person_id: number; day_of_week: number; status: string }) => {
       const { data: result, error } = await supabase
         .from('recurrent_attendance')
-        .insert(data)
+        .upsert(data, {
+          onConflict: 'person_id,day_of_week',
+          ignoreDuplicates: false
+        })
         .select()
         .single();
       

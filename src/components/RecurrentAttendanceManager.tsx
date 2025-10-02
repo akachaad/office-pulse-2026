@@ -63,9 +63,10 @@ const RecurrentAttendanceManager = ({ selectedPerson }: RecurrentAttendanceManag
         status: selectedStatus,
       });
 
+      const existingRule = getRuleForDay(selectedDay);
       toast({
         title: "Success",
-        description: "Recurrent pattern added successfully",
+        description: existingRule ? "Recurrent pattern updated successfully" : "Recurrent pattern added successfully",
       });
 
       setSelectedDay(null);
@@ -146,16 +147,15 @@ const RecurrentAttendanceManager = ({ selectedPerson }: RecurrentAttendanceManag
                 <SelectTrigger>
                   <SelectValue placeholder="Select day" />
                 </SelectTrigger>
-                <SelectContent>
+              <SelectContent>
                   {daysOfWeek.map((day) => {
                     const hasRule = getRuleForDay(day.value);
                     return (
                       <SelectItem
                         key={day.value}
                         value={day.value.toString()}
-                        disabled={!!hasRule}
                       >
-                        {day.label} {hasRule && '(already set)'}
+                        {day.label} {hasRule && '(will overwrite)'}
                       </SelectItem>
                     );
                   })}
