@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Settings, Users, LogOut, AlertTriangle } from 'lucide-react';
+import { Calendar, Settings, Users, LogOut, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,15 +33,6 @@ export default function Navigation() {
         >
           <Calendar className="h-4 w-4" />
           Attendance Tracker
-        </Button>
-        
-        <Button
-          variant={isActive('/desk-reservation') ? 'default' : 'outline'}
-          onClick={() => navigate('/desk-reservation')}
-          className="flex items-center gap-2 shadow-soft"
-        >
-          <MapPin className="h-4 w-4" />
-          Desk Reservation
         </Button>
 
         {isAdminOrHr && (

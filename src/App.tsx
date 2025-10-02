@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
-import DeskReservation from "./pages/DeskReservation";
 import TrigrammeView from "./pages/TrigrammeView";
 import AdminCapacity from "./pages/AdminCapacity";
 import AdminAttendance from "./pages/AdminAttendance";
@@ -26,7 +25,6 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/desk-reservation" element={<DeskReservation />} />
             <Route path="/trigramme/:trigramme" element={<TrigrammeView />} />
             <Route path="/admin/capacity" element={
               <ProtectedRoute requireRole="hr">
