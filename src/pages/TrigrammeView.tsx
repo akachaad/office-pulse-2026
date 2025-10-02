@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { usePeople } from '@/hooks/usePeople';
 import { useAttendance } from '@/hooks/useAttendance';
+import { useRecurrentAttendance } from '@/hooks/useRecurrentAttendance';
 import { useState } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +21,9 @@ const TrigrammeView = () => {
 
   // Find the person with matching trigramme
   const person = people?.find(p => p.trigramme === trigramme);
+  
+  // Fetch recurrent patterns for this person
+  const { data: recurrentPatterns } = useRecurrentAttendance(person?.id);
 
   if (!person) {
     return (
@@ -42,17 +46,30 @@ const TrigrammeView = () => {
   const monthEnd = endOfMonth(currentDate);
   const calendarDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  const getAttendanceForDay = (date: Date): AttendanceStatus | null => {
+  const getAttendanceForDay = (date: Date): { status: AttendanceStatus | null; isRecurrent: boolean } => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const record = attendance?.find(a => 
       a.person_id === person.id && 
       format(new Date(a.date), 'yyyy-MM-dd') === dateStr
     );
-    return record?.status as AttendanceStatus || null;
+    
+    if (record) {
+      return { status: record.status as AttendanceStatus, isRecurrent: false };
+    }
+    
+    // Check for recurrent pattern if no specific record exists
+    const dayOfWeek = date.getDay();
+    const recurrentPattern = recurrentPatterns?.find(p => p.day_of_week === dayOfWeek);
+    
+    if (recurrentPattern) {
+      return { status: recurrentPattern.status as AttendanceStatus, isRecurrent: true };
+    }
+    
+    return { status: null, isRecurrent: false };
   };
 
   const handleDayClick = (date: Date) => {
-    const currentStatus = getAttendanceForDay(date);
+    const { status: currentStatus } = getAttendanceForDay(date);
     const statusCycle: (AttendanceStatus | null)[] = [null, 'holidays', 'sickness', 'training', 'homeworking'];
     const currentIndex = statusCycle.indexOf(currentStatus);
     const nextStatus = statusCycle[(currentIndex + 1) % statusCycle.length];
@@ -231,7 +248,7 @@ const TrigrammeView = () => {
                   ))}
                   
                   {calendarDays.map((day) => {
-                    const status = getAttendanceForDay(day);
+                    const { status, isRecurrent } = getAttendanceForDay(day);
                     const isToday = isSameDay(day, new Date());
                     
                     return (
@@ -245,7 +262,9 @@ const TrigrammeView = () => {
                           ${getSprintClass(day)}
                           ${isToday ? 'ring-2 ring-primary ring-offset-2' : ''}
                           ${!isSameMonth(day, currentDate) ? 'opacity-30' : ''}
+                          ${isRecurrent ? 'opacity-60 border-dashed' : ''}
                         `}
+                        title={isRecurrent ? `Recurrent pattern: ${status}` : ''}
                       >
                         <span className="text-xs absolute top-0.5 left-0.5 text-foreground/70">
                           {format(day, 'd')}
@@ -254,9 +273,12 @@ const TrigrammeView = () => {
                           {getSprintIndicator(day)}
                         </span>
                         {status && (
-                          <span className="text-white font-bold text-lg mt-1">
+                          <span className={`font-bold text-lg mt-1 ${isRecurrent ? 'opacity-70' : 'text-white'}`}>
                             {getStatusText(status)}
                           </span>
+                        )}
+                        {isRecurrent && (
+                          <span className="text-xs absolute bottom-0.5 right-0.5 opacity-50">⟲</span>
                         )}
                       </button>
                     );
@@ -325,6 +347,10 @@ const TrigrammeView = () => {
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded bg-green-500"></div>
                   <span>W = Homeworking</span>
+                </div>
+                <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+                  <span className="text-xs">⟲</span>
+                  <span className="text-xs">Recurrent pattern</span>
                 </div>
                 
                 <div className="text-xs font-semibold mt-4 mb-2">Sprints:</div>

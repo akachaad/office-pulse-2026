@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { usePeople } from '@/hooks/usePeople';
 import { useAttendance } from '@/hooks/useAttendance';
+import { useRecurrentAttendance } from '@/hooks/useRecurrentAttendance';
 
 type AttendanceStatus = 'present' | 'sickness' | 'holidays' | 'training' | 'homeworking' | null;
 
@@ -24,6 +25,7 @@ export default function ConsolidatedView() {
   
   const { data: peopleData, isLoading: peopleLoading } = usePeople();
   const { data: attendanceData, isLoading: attendanceLoading } = useAttendance(currentMonth);
+  const { data: recurrentPatterns } = useRecurrentAttendance();
   
   // Transform data to match component interface
   const people = useMemo<PersonWithAttendance[]>(() => {
@@ -38,6 +40,26 @@ export default function ConsolidatedView() {
           personAttendance[record.date] = record.status;
         });
       
+      // Add recurrent patterns for dates without specific records
+      const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateKey = formatDateKey(day, currentMonth, currentYear);
+        
+        // Only apply recurrent pattern if no specific record exists
+        if (!personAttendance[dateKey]) {
+          const date = new Date(currentYear, currentMonth, day);
+          const dayOfWeek = date.getDay();
+          
+          const recurrentPattern = recurrentPatterns?.find(
+            p => p.person_id === person.id && p.day_of_week === dayOfWeek
+          );
+          
+          if (recurrentPattern && !isNonWorkingDay(day, currentMonth, currentYear)) {
+            personAttendance[dateKey] = recurrentPattern.status as AttendanceStatus;
+          }
+        }
+      }
+      
       return {
         id: person.id,
         trigramme: person.trigramme || 'N/A',
@@ -46,7 +68,7 @@ export default function ConsolidatedView() {
         attendance: personAttendance,
       };
     });
-  }, [peopleData, attendanceData]);
+  }, [peopleData, attendanceData, recurrentPatterns, currentMonth, currentYear]);
 
   const teams = ['All', ...Array.from(new Set(people.map(p => p.team)))];
 
@@ -98,14 +120,14 @@ export default function ConsolidatedView() {
     return new Date(year, month + 1, 0).getDate();
   };
 
+  const formatDateKey = (day: number, month: number, year: number = 2025) => {
+    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  };
+
   const isWeekend = (day: number, month: number, year: number = 2025) => {
     const date = new Date(year, month, day);
     const dayOfWeek = date.getDay();
     return dayOfWeek === 0 || dayOfWeek === 6;
-  };
-
-  const formatDateKey = (day: number, month: number, year: number = 2025) => {
-    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
   const isFrenchBankHoliday = (day: number, month: number, year: number = 2025) => {
