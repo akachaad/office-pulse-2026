@@ -399,18 +399,24 @@ export default function AttendanceTracker() {
                     variant="outline" 
                     className="w-full justify-start hover:shadow-soft"
                     disabled={!currentPerson}
-                    onClick={() => {
+                    onClick={async () => {
                       if (!currentPerson) return;
                       const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+                      const updates = [];
+                      
                       for (let day = 1; day <= daysInMonth; day++) {
                         if (!isNonWorkingDay(day, currentMonth, currentYear)) {
                           const dateKey = formatDateKey(day, currentMonth, currentYear);
-                          updateAttendanceMutation.mutate({
+                          updates.push({
                             personId: currentPerson.id,
                             date: dateKey,
-                            status: 'present',
+                            status: 'present' as const,
                           });
                         }
+                      }
+                      
+                      for (const update of updates) {
+                        await updateAttendanceMutation.mutateAsync(update);
                       }
                     }}
                   >
@@ -420,18 +426,24 @@ export default function AttendanceTracker() {
                     variant="outline" 
                     className="w-full justify-start hover:shadow-soft"
                     disabled={!currentPerson}
-                    onClick={() => {
+                    onClick={async () => {
                       if (!currentPerson) return;
                       const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+                      const updates = [];
+                      
                       for (let day = 1; day <= daysInMonth; day++) {
                         if (!isNonWorkingDay(day, currentMonth, currentYear)) {
                           const dateKey = formatDateKey(day, currentMonth, currentYear);
-                          updateAttendanceMutation.mutate({
+                          updates.push({
                             personId: currentPerson.id,
                             date: dateKey,
                             status: null,
                           });
                         }
+                      }
+                      
+                      for (const update of updates) {
+                        await updateAttendanceMutation.mutateAsync(update);
                       }
                     }}
                   >
@@ -451,21 +463,28 @@ export default function AttendanceTracker() {
                           size="sm"
                           className="text-xs hover:shadow-soft hover:bg-homeworking-light"
                           disabled={!currentPerson}
-                          onClick={() => {
+                          onClick={async () => {
                             if (!currentPerson) return;
                             const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+                            const updates = [];
+                            
                             for (let day = 1; day <= daysInMonth; day++) {
                               if (!isNonWorkingDay(day, currentMonth, currentYear)) {
                                 const date = new Date(currentYear, currentMonth, day);
                                 if (date.getDay() === weekdayIndex) {
                                   const dateKey = formatDateKey(day, currentMonth, currentYear);
-                                  updateAttendanceMutation.mutate({
+                                  updates.push({
                                     personId: currentPerson.id,
                                     date: dateKey,
-                                    status: 'homeworking',
+                                    status: 'homeworking' as const,
                                   });
                                 }
                               }
+                            }
+                            
+                            // Execute updates sequentially to avoid race conditions
+                            for (const update of updates) {
+                              await updateAttendanceMutation.mutateAsync(update);
                             }
                           }}
                         >
