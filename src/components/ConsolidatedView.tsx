@@ -26,6 +26,68 @@ export default function ConsolidatedView() {
   const { data: peopleData, isLoading: peopleLoading } = usePeople();
   const { data: attendanceData, isLoading: attendanceLoading } = useAttendance(currentMonth);
   const { data: recurrentPatterns } = useRecurrentAttendance();
+
+  // Helper functions must be defined before useMemo that uses them
+  const getDaysInMonth = (month: number, year: number = 2025) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const formatDateKey = (day: number, month: number, year: number = 2025) => {
+    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  };
+
+  const isWeekend = (day: number, month: number, year: number = 2025) => {
+    const date = new Date(year, month, day);
+    const dayOfWeek = date.getDay();
+    return dayOfWeek === 0 || dayOfWeek === 6;
+  };
+
+  const isFrenchBankHoliday = (day: number, month: number, year: number = 2025) => {
+    // Fixed holidays
+    const fixedHolidays = [
+      { month: 0, day: 1 },   // New Year's Day
+      { month: 4, day: 1 },   // Labour Day
+      { month: 4, day: 8 },   // Victory in Europe Day
+      { month: 6, day: 14 },  // Bastille Day
+      { month: 7, day: 15 },  // Assumption of Mary
+      { month: 10, day: 1 },  // All Saints' Day
+      { month: 10, day: 11 }, // Armistice Day
+      { month: 11, day: 25 }, // Christmas Day
+    ];
+
+    if (fixedHolidays.some(holiday => holiday.month === month && holiday.day === day)) {
+      return true;
+    }
+
+    // Calculate Easter for variable holidays (2025)
+    if (year === 2025) {
+      const easterDate = new Date(2025, 3, 20); // Easter Sunday April 20, 2025
+      
+      // Easter Monday (day after Easter)
+      const easterMonday = new Date(easterDate);
+      easterMonday.setDate(easterDate.getDate() + 1);
+      
+      // Ascension Day (39 days after Easter)
+      const ascensionDay = new Date(easterDate);
+      ascensionDay.setDate(easterDate.getDate() + 39);
+      
+      // Whit Monday (50 days after Easter)
+      const whitMonday = new Date(easterDate);
+      whitMonday.setDate(easterDate.getDate() + 50);
+      
+      const variableHolidays = [easterMonday, ascensionDay, whitMonday];
+      
+      return variableHolidays.some(holiday => 
+        holiday.getDate() === day && holiday.getMonth() === month
+      );
+    }
+
+    return false;
+  };
+
+  const isNonWorkingDay = (day: number, month: number, year: number = 2025) => {
+    return isWeekend(day, month, year) || isFrenchBankHoliday(day, month, year);
+  };
   
   // Transform data to match component interface
   const people = useMemo<PersonWithAttendance[]>(() => {
@@ -115,67 +177,6 @@ export default function ConsolidatedView() {
       </div>
     );
   }
-
-  const getDaysInMonth = (month: number, year: number = 2025) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-
-  const formatDateKey = (day: number, month: number, year: number = 2025) => {
-    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  };
-
-  const isWeekend = (day: number, month: number, year: number = 2025) => {
-    const date = new Date(year, month, day);
-    const dayOfWeek = date.getDay();
-    return dayOfWeek === 0 || dayOfWeek === 6;
-  };
-
-  const isFrenchBankHoliday = (day: number, month: number, year: number = 2025) => {
-    // Fixed holidays
-    const fixedHolidays = [
-      { month: 0, day: 1 },   // New Year's Day
-      { month: 4, day: 1 },   // Labour Day
-      { month: 4, day: 8 },   // Victory in Europe Day
-      { month: 6, day: 14 },  // Bastille Day
-      { month: 7, day: 15 },  // Assumption of Mary
-      { month: 10, day: 1 },  // All Saints' Day
-      { month: 10, day: 11 }, // Armistice Day
-      { month: 11, day: 25 }, // Christmas Day
-    ];
-
-    if (fixedHolidays.some(holiday => holiday.month === month && holiday.day === day)) {
-      return true;
-    }
-
-    // Calculate Easter for variable holidays (2025)
-    if (year === 2025) {
-      const easterDate = new Date(2025, 3, 20); // Easter Sunday April 20, 2025
-      
-      // Easter Monday (day after Easter)
-      const easterMonday = new Date(easterDate);
-      easterMonday.setDate(easterDate.getDate() + 1);
-      
-      // Ascension Day (39 days after Easter)
-      const ascensionDay = new Date(easterDate);
-      ascensionDay.setDate(easterDate.getDate() + 39);
-      
-      // Whit Monday (50 days after Easter)
-      const whitMonday = new Date(easterDate);
-      whitMonday.setDate(easterDate.getDate() + 50);
-      
-      const variableHolidays = [easterMonday, ascensionDay, whitMonday];
-      
-      return variableHolidays.some(holiday => 
-        holiday.getDate() === day && holiday.getMonth() === month
-      );
-    }
-
-    return false;
-  };
-
-  const isNonWorkingDay = (day: number, month: number, year: number = 2025) => {
-    return isWeekend(day, month, year) || isFrenchBankHoliday(day, month, year);
-  };
 
   const getWorkingDays = (month: number, year: number) => {
     const daysInMonth = getDaysInMonth(month, year);
