@@ -46,38 +46,93 @@ const TrigrammeView = () => {
   const monthEnd = endOfMonth(currentDate);
   const calendarDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  const getAttendanceForDay = (date: Date): { status: AttendanceStatus | null; isRecurrent: boolean } => {
+  const getAttendanceForDay = (date: Date): { 
+    morning: { status: AttendanceStatus | null; isRecurrent: boolean };
+    afternoon: { status: AttendanceStatus | null; isRecurrent: boolean };
+    fullDay: { status: AttendanceStatus | null; isRecurrent: boolean };
+  } => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    const record = attendance?.find(a => 
+    const records = attendance?.filter(a => 
       a.person_id === person.id && 
       format(new Date(a.date), 'yyyy-MM-dd') === dateStr
     );
     
-    if (record) {
-      return { status: record.status as AttendanceStatus, isRecurrent: false };
-    }
+    const morningRecord = records?.find(r => r.period === 'morning');
+    const afternoonRecord = records?.find(r => r.period === 'afternoon');
+    const fullDayRecord = records?.find(r => r.period === 'full_day');
     
     // Check for recurrent pattern if no specific record exists
     const dayOfWeek = date.getDay();
     const recurrentPattern = recurrentPatterns?.find(p => p.day_of_week === dayOfWeek);
+    const recurrentStatus = recurrentPattern?.status as AttendanceStatus;
     
-    if (recurrentPattern) {
-      return { status: recurrentPattern.status as AttendanceStatus, isRecurrent: true };
-    }
-    
-    return { status: null, isRecurrent: false };
+    return {
+      morning: { 
+        status: morningRecord?.status as AttendanceStatus || null, 
+        isRecurrent: !morningRecord && !!recurrentPattern 
+      },
+      afternoon: { 
+        status: afternoonRecord?.status as AttendanceStatus || null, 
+        isRecurrent: !afternoonRecord && !!recurrentPattern 
+      },
+      fullDay: { 
+        status: fullDayRecord?.status as AttendanceStatus || (morningRecord || afternoonRecord ? null : recurrentStatus), 
+        isRecurrent: !fullDayRecord && !morningRecord && !afternoonRecord && !!recurrentPattern 
+      }
+    };
   };
 
-  const handleDayClick = (date: Date) => {
-    const { status: currentStatus } = getAttendanceForDay(date);
+  const handleDayClick = (date: Date, period: 'morning' | 'afternoon' | 'full_day') => {
+    const attendance = getAttendanceForDay(date);
+    let currentStatus: AttendanceStatus | null;
+    
+    if (period === 'morning') {
+      currentStatus = attendance.morning.status;
+    } else if (period === 'afternoon') {
+      currentStatus = attendance.afternoon.status;
+    } else {
+      currentStatus = attendance.fullDay.status;
+    }
+    
     const statusCycle: (AttendanceStatus | null)[] = [null, 'holidays', 'sickness', 'training', 'homeworking'];
     const currentIndex = statusCycle.indexOf(currentStatus);
     const nextStatus = statusCycle[(currentIndex + 1) % statusCycle.length];
+    
+    // If setting a half-day status, clear full-day status if it exists
+    if (period !== 'full_day' && attendance.fullDay.status) {
+      updateAttendanceMutation.mutate({
+        personId: person.id,
+        date: format(date, 'yyyy-MM-dd'),
+        status: null,
+        period: 'full_day',
+      });
+    }
+    
+    // If setting full-day status, clear half-day statuses if they exist
+    if (period === 'full_day' && (attendance.morning.status || attendance.afternoon.status)) {
+      if (attendance.morning.status) {
+        updateAttendanceMutation.mutate({
+          personId: person.id,
+          date: format(date, 'yyyy-MM-dd'),
+          status: null,
+          period: 'morning',
+        });
+      }
+      if (attendance.afternoon.status) {
+        updateAttendanceMutation.mutate({
+          personId: person.id,
+          date: format(date, 'yyyy-MM-dd'),
+          status: null,
+          period: 'afternoon',
+        });
+      }
+    }
     
     updateAttendanceMutation.mutate({
       personId: person.id,
       date: format(date, 'yyyy-MM-dd'),
       status: nextStatus,
+      period,
     });
   };
 
@@ -248,39 +303,87 @@ const TrigrammeView = () => {
                   ))}
                   
                   {calendarDays.map((day) => {
-                    const { status, isRecurrent } = getAttendanceForDay(day);
+                    const attendance = getAttendanceForDay(day);
                     const isToday = isSameDay(day, new Date());
+                    const hasFullDay = attendance.fullDay.status !== null;
+                    const hasMorning = attendance.morning.status !== null;
+                    const hasAfternoon = attendance.afternoon.status !== null;
+                    const hasHalfDay = hasMorning || hasAfternoon;
                     
                     return (
-                      <button
+                      <div
                         key={day.toISOString()}
-                        onClick={() => handleDayClick(day)}
                         className={`
-                          aspect-square rounded-lg border text-sm font-medium transition-all duration-200
-                          flex flex-col items-center justify-center relative
-                          ${getStatusColor(status)}
+                          aspect-square rounded-lg border transition-all duration-200
+                          flex flex-col relative
                           ${getSprintClass(day)}
                           ${isToday ? 'ring-2 ring-primary ring-offset-2' : ''}
                           ${!isSameMonth(day, currentDate) ? 'opacity-30' : ''}
-                          ${isRecurrent ? 'opacity-60 border-dashed' : ''}
+                          ${!hasFullDay && !hasHalfDay ? 'bg-muted' : ''}
                         `}
-                        title={isRecurrent ? `Recurrent pattern: ${status}` : ''}
                       >
-                        <span className="text-xs absolute top-0.5 left-0.5 text-foreground/70">
+                        <span className="text-xs absolute top-0.5 left-0.5 text-foreground/70 z-10">
                           {format(day, 'd')}
                         </span>
-                        <span className="text-xs absolute top-0.5 right-0.5 text-primary font-mono">
+                        <span className="text-xs absolute top-0.5 right-0.5 text-primary font-mono z-10">
                           {getSprintIndicator(day)}
                         </span>
-                        {status && (
-                          <span className={`font-bold text-lg mt-1 ${isRecurrent ? 'opacity-70' : 'text-white'}`}>
-                            {getStatusText(status)}
-                          </span>
+                        
+                        {hasFullDay ? (
+                          <button
+                            onClick={() => handleDayClick(day, 'full_day')}
+                            className={`
+                              flex-1 rounded-lg transition-all duration-200 flex items-center justify-center
+                              ${getStatusColor(attendance.fullDay.status)}
+                              ${attendance.fullDay.isRecurrent ? 'opacity-60 border-dashed' : ''}
+                            `}
+                            title={attendance.fullDay.isRecurrent ? `Recurrent pattern: ${attendance.fullDay.status}` : 'Full day'}
+                          >
+                            <span className={`font-bold text-lg ${attendance.fullDay.isRecurrent ? 'opacity-70' : 'text-white'}`}>
+                              {getStatusText(attendance.fullDay.status)}
+                            </span>
+                            {attendance.fullDay.isRecurrent && (
+                              <span className="text-xs absolute bottom-0.5 right-0.5 opacity-50">⟲</span>
+                            )}
+                          </button>
+                        ) : (
+                          <div className="flex-1 flex flex-col">
+                            <button
+                              onClick={() => handleDayClick(day, 'morning')}
+                              className={`
+                                flex-1 rounded-t-lg transition-all duration-200 flex items-center justify-center border-b
+                                ${getStatusColor(attendance.morning.status)}
+                                ${attendance.morning.isRecurrent ? 'opacity-60 border-dashed' : ''}
+                              `}
+                              title={attendance.morning.isRecurrent ? `Recurrent morning: ${attendance.morning.status}` : 'Morning'}
+                            >
+                              {attendance.morning.status && (
+                                <span className={`font-bold text-sm ${attendance.morning.isRecurrent ? 'opacity-70' : 'text-white'}`}>
+                                  {getStatusText(attendance.morning.status)}
+                                </span>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleDayClick(day, 'afternoon')}
+                              className={`
+                                flex-1 rounded-b-lg transition-all duration-200 flex items-center justify-center
+                                ${getStatusColor(attendance.afternoon.status)}
+                                ${attendance.afternoon.isRecurrent ? 'opacity-60 border-dashed' : ''}
+                              `}
+                              title={attendance.afternoon.isRecurrent ? `Recurrent afternoon: ${attendance.afternoon.status}` : 'Afternoon'}
+                            >
+                              {attendance.afternoon.status && (
+                                <span className={`font-bold text-sm ${attendance.afternoon.isRecurrent ? 'opacity-70' : 'text-white'}`}>
+                                  {getStatusText(attendance.afternoon.status)}
+                                </span>
+                              )}
+                              {(attendance.morning.isRecurrent || attendance.afternoon.isRecurrent) && (
+                                <span className="text-xs absolute bottom-0.5 right-0.5 opacity-50">⟲</span>
+                              )}
+                            </button>
+                          </div>
                         )}
-                        {isRecurrent && (
-                          <span className="text-xs absolute bottom-0.5 right-0.5 opacity-50">⟲</span>
-                        )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>

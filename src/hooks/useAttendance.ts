@@ -6,6 +6,7 @@ export interface AttendanceRecord {
   person_id: number;
   date: string;
   status: 'present' | 'sickness' | 'holidays' | 'training' | 'homeworking';
+  period: 'full_day' | 'morning' | 'afternoon';
   created_at: string;
   updated_at: string;
 }
@@ -42,19 +43,22 @@ export const useUpdateAttendance = () => {
     mutationFn: async ({ 
       personId, 
       date, 
-      status 
+      status,
+      period = 'full_day'
     }: { 
       personId: number; 
       date: string; 
       status: 'present' | 'sickness' | 'holidays' | 'training' | 'homeworking' | null;
+      period?: 'full_day' | 'morning' | 'afternoon';
     }) => {
       if (status === null) {
-        // Delete the attendance record
+        // Delete the attendance record for the specific period
         const { error } = await supabase
           .from('attendance')
           .delete()
           .eq('person_id', personId)
-          .eq('date', date);
+          .eq('date', date)
+          .eq('period', period);
           
         if (error) throw error;
         return null;
@@ -66,8 +70,9 @@ export const useUpdateAttendance = () => {
             person_id: personId,
             date,
             status,
+            period,
           }, {
-            onConflict: 'person_id,date'
+            onConflict: 'person_id,date,period'
           })
           .select()
           .single();
