@@ -82,6 +82,33 @@ export type Database = {
         }
         Relationships: []
       }
+      recurrent_attendance: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          id: string
+          person_id: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          id?: string
+          person_id: number
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          id?: string
+          person_id?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CalendarIcon, Users, Save, Plus } from 'lucide-react';
 import { format, eachDayOfInterval } from 'date-fns';
 import Navigation from '@/components/Navigation';
+import RecurrentAttendanceManager from '@/components/RecurrentAttendanceManager';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
 import { z } from 'zod';
@@ -311,6 +312,8 @@ const AdminAttendance = () => {
           </Card>
         </div>
 
+        <RecurrentAttendanceManager selectedPerson={selectedPerson} />
+
         <Card className="shadow-soft">
           <CardHeader>
             <CardTitle className="text-sm font-medium">Guidelines</CardTitle>
@@ -321,6 +324,7 @@ const AdminAttendance = () => {
             <p>• Select the appropriate attendance status</p>
             <p>• Click Save to update attendance for all selected dates</p>
             <p>• Existing records will be updated, new records will be created</p>
+            <p className="pt-2 border-t"><strong>Recurrent Patterns:</strong> Set default status for specific weekdays (e.g., "every Monday = homeworking")</p>
           </CardContent>
         </Card>
       </div>
