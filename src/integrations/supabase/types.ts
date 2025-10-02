@@ -58,6 +58,7 @@ export type Database = {
           role: string | null
           team: string | null
           trigramme: string | null
+          user_id: string | null
         }
         Insert: {
           capacity?: number | null
@@ -67,6 +68,7 @@ export type Database = {
           role?: string | null
           team?: string | null
           trigramme?: string | null
+          user_id?: string | null
         }
         Update: {
           capacity?: number | null
@@ -76,6 +78,7 @@ export type Database = {
           role?: string | null
           team?: string | null
           trigramme?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
