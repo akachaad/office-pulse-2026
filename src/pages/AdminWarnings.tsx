@@ -96,16 +96,36 @@ const AdminWarnings = () => {
   const capacityWarnings = useMemo(() => {
     if (!attendance || capacityLimit <= 0) return [];
 
-    // Group by date and count "present" status
-    const dailyCounts = attendance.reduce((acc, record) => {
+    // Group by person_id and date to handle half-days correctly
+    const personDateMap = attendance.reduce((acc, record) => {
       if (record.status === 'present') {
-        if (!acc[record.date]) {
-          acc[record.date] = 0;
+        const key = `${record.person_id}-${record.date}`;
+        if (!acc[key]) {
+          acc[key] = { date: record.date, morning: false, afternoon: false, fullDay: false };
         }
-        acc[record.date]++;
+        if (record.period === 'full_day') {
+          acc[key].fullDay = true;
+        } else if (record.period === 'morning') {
+          acc[key].morning = true;
+        } else if (record.period === 'afternoon') {
+          acc[key].afternoon = true;
+        }
       }
       return acc;
-    }, {} as Record<string, number>);
+    }, {} as Record<string, { date: string; morning: boolean; afternoon: boolean; fullDay: boolean }>);
+
+    // Count people per date (0.5 for half-days, 1 for full days or both halves)
+    const dailyCounts: Record<string, number> = {};
+    Object.values(personDateMap).forEach(({ date, morning, afternoon, fullDay }) => {
+      if (!dailyCounts[date]) {
+        dailyCounts[date] = 0;
+      }
+      if (fullDay || (morning && afternoon)) {
+        dailyCounts[date] += 1;
+      } else if (morning || afternoon) {
+        dailyCounts[date] += 0.5;
+      }
+    });
 
     // Filter dates exceeding capacity
     const capacityWarningsList: CapacityWarning[] = Object.entries(dailyCounts)
