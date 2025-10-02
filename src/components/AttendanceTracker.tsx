@@ -1,16 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, BarChart3, Users, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ConsolidatedView from './ConsolidatedView';
 import Navigation from './Navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { usePeople } from '@/hooks/usePeople';
+import { useAttendance, useUpdateAttendance } from '@/hooks/useAttendance';
+import { format } from 'date-fns';
 
 type AttendanceStatus = 'present' | 'sickness' | 'holidays' | 'training' | 'homeworking' | null;
-
-interface AttendanceData {
-  [key: string]: AttendanceStatus; // Format: "YYYY-MM-DD"
-}
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -22,8 +22,18 @@ const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 export default function AttendanceTracker() {
   const [currentMonth, setCurrentMonth] = useState(9); // 9 = October 2025
   const [currentYear, setCurrentYear] = useState(2025);
-  const [attendance, setAttendance] = useState<AttendanceData>({});
   const [activeTab, setActiveTab] = useState("individual");
+  
+  const { user } = useAuth();
+  const { data: people } = usePeople();
+  const { data: attendanceRecords } = useAttendance(currentMonth, currentYear);
+  const updateAttendanceMutation = useUpdateAttendance();
+  
+  // Find the person associated with the current user
+  const currentPerson = useMemo(() => {
+    if (!user || !people) return null;
+    return people.find(p => p.user_id === user.id);
+  }, [user, people]);
 
   const getDaysInMonth = (month: number, year: number = 2025) => {
     return new Date(year, month + 1, 0).getDate();
@@ -90,11 +100,20 @@ export default function AttendanceTracker() {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
+  const getAttendanceForDay = (dateKey: string): AttendanceStatus => {
+    if (!currentPerson || !attendanceRecords) return null;
+    
+    const record = attendanceRecords.find(
+      a => a.person_id === currentPerson.id && a.date === dateKey
+    );
+    return (record?.status as AttendanceStatus) || null;
+  };
+
   const toggleAttendance = (day: number, month: number, year: number) => {
-    if (isNonWorkingDay(day, month, year)) return; // Don't allow marking non-working days
+    if (isNonWorkingDay(day, month, year) || !currentPerson) return;
     
     const dateKey = formatDateKey(day, month, year);
-    const currentStatus = attendance[dateKey];
+    const currentStatus = getAttendanceForDay(dateKey);
     
     let newStatus: AttendanceStatus;
     if (currentStatus === null || currentStatus === undefined) {
@@ -111,23 +130,27 @@ export default function AttendanceTracker() {
       newStatus = null;
     }
     
-    setAttendance(prev => ({
-      ...prev,
-      [dateKey]: newStatus
-    }));
+    updateAttendanceMutation.mutate({
+      personId: currentPerson.id,
+      date: dateKey,
+      status: newStatus,
+    });
   };
 
   const getAttendanceStats = () => {
-    const monthKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-    const monthAttendance = Object.entries(attendance).filter(([date]) => 
-      date.startsWith(monthKey)
-    );
+    if (!currentPerson || !attendanceRecords) {
+      const weekdays = Array.from({ length: getDaysInMonth(currentMonth, currentYear) }, (_, i) => i + 1)
+        .filter(day => !isNonWorkingDay(day, currentMonth, currentYear)).length;
+      return { present: 0, sickness: 0, holidays: 0, training: 0, homeworking: 0, total: weekdays, unmarked: weekdays };
+    }
+
+    const monthAttendance = attendanceRecords.filter(a => a.person_id === currentPerson.id);
     
-    const present = monthAttendance.filter(([, status]) => status === 'present').length;
-    const sickness = monthAttendance.filter(([, status]) => status === 'sickness').length;
-    const holidays = monthAttendance.filter(([, status]) => status === 'holidays').length;
-    const training = monthAttendance.filter(([, status]) => status === 'training').length;
-    const homeworking = monthAttendance.filter(([, status]) => status === 'homeworking').length;
+    const present = monthAttendance.filter(a => a.status === 'present').length;
+    const sickness = monthAttendance.filter(a => a.status === 'sickness').length;
+    const holidays = monthAttendance.filter(a => a.status === 'holidays').length;
+    const training = monthAttendance.filter(a => a.status === 'training').length;
+    const homeworking = monthAttendance.filter(a => a.status === 'homeworking').length;
     const total = getDaysInMonth(currentMonth, currentYear);
     const weekdays = Array.from({ length: total }, (_, i) => i + 1)
       .filter(day => !isNonWorkingDay(day, currentMonth, currentYear)).length;
@@ -148,7 +171,7 @@ export default function AttendanceTracker() {
     // Days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const dateKey = formatDateKey(day, currentMonth, currentYear);
-      const status = attendance[dateKey];
+      const status = getAttendanceForDay(dateKey);
       const nonWorkingDay = isNonWorkingDay(day, currentMonth, currentYear);
       
       let dayClasses = "aspect-square flex items-center justify-center text-sm font-medium cursor-pointer transition-all duration-200 rounded-lg border-2 border-transparent";
@@ -375,16 +398,20 @@ export default function AttendanceTracker() {
                   <Button 
                     variant="outline" 
                     className="w-full justify-start hover:shadow-soft"
+                    disabled={!currentPerson}
                     onClick={() => {
+                      if (!currentPerson) return;
                       const daysInMonth = getDaysInMonth(currentMonth, currentYear);
-                      const newAttendance = { ...attendance };
                       for (let day = 1; day <= daysInMonth; day++) {
                         if (!isNonWorkingDay(day, currentMonth, currentYear)) {
                           const dateKey = formatDateKey(day, currentMonth, currentYear);
-                          newAttendance[dateKey] = 'present';
+                          updateAttendanceMutation.mutate({
+                            personId: currentPerson.id,
+                            date: dateKey,
+                            status: 'present',
+                          });
                         }
                       }
-                      setAttendance(newAttendance);
                     }}
                   >
                     Mark all as Present
@@ -392,16 +419,20 @@ export default function AttendanceTracker() {
                   <Button 
                     variant="outline" 
                     className="w-full justify-start hover:shadow-soft"
+                    disabled={!currentPerson}
                     onClick={() => {
+                      if (!currentPerson) return;
                       const daysInMonth = getDaysInMonth(currentMonth, currentYear);
-                      const newAttendance = { ...attendance };
                       for (let day = 1; day <= daysInMonth; day++) {
                         if (!isNonWorkingDay(day, currentMonth, currentYear)) {
                           const dateKey = formatDateKey(day, currentMonth, currentYear);
-                          newAttendance[dateKey] = null;
+                          updateAttendanceMutation.mutate({
+                            personId: currentPerson.id,
+                            date: dateKey,
+                            status: null,
+                          });
                         }
                       }
-                      setAttendance(newAttendance);
                     }}
                   >
                     Clear this month
@@ -419,19 +450,23 @@ export default function AttendanceTracker() {
                           variant="outline"
                           size="sm"
                           className="text-xs hover:shadow-soft hover:bg-homeworking-light"
+                          disabled={!currentPerson}
                           onClick={() => {
+                            if (!currentPerson) return;
                             const daysInMonth = getDaysInMonth(currentMonth, currentYear);
-                            const newAttendance = { ...attendance };
                             for (let day = 1; day <= daysInMonth; day++) {
                               if (!isNonWorkingDay(day, currentMonth, currentYear)) {
                                 const date = new Date(currentYear, currentMonth, day);
                                 if (date.getDay() === weekdayIndex) {
                                   const dateKey = formatDateKey(day, currentMonth, currentYear);
-                                  newAttendance[dateKey] = 'homeworking';
+                                  updateAttendanceMutation.mutate({
+                                    personId: currentPerson.id,
+                                    date: dateKey,
+                                    status: 'homeworking',
+                                  });
                                 }
                               }
                             }
-                            setAttendance(newAttendance);
                           }}
                         >
                           {dayName.slice(0, 3)}

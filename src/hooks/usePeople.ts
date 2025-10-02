@@ -9,6 +9,7 @@ export interface Person {
   nature: string;
   trigramme: string;
   created_at: string;
+  user_id: string | null;
 }
 
 export const usePeople = () => {
@@ -32,6 +33,7 @@ export const usePeople = () => {
         nature: person.nature || '',
         trigramme: person.trigramme || 'N/A',
         created_at: person.created_at,
+        user_id: person.user_id || null,
       })) as Person[];
     },
   });
