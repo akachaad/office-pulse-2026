@@ -15,7 +15,13 @@ interface PersonWithAttendance {
   trigramme: string;
   role: string;
   team: string;
-  attendance: { [key: string]: AttendanceStatus };
+  attendance: { 
+    [key: string]: {
+      morning: AttendanceStatus;
+      afternoon: AttendanceStatus;
+      fullDay: AttendanceStatus;
+    }
+  };
 }
 
 export default function ConsolidatedView() {
@@ -94,13 +100,37 @@ export default function ConsolidatedView() {
     if (!peopleData || !attendanceData) return [];
     
     return peopleData.map(person => {
-      const personAttendance: { [key: string]: AttendanceStatus } = {};
+      const personAttendance: { 
+        [key: string]: {
+          morning: AttendanceStatus;
+          afternoon: AttendanceStatus;
+          fullDay: AttendanceStatus;
+        }
+      } = {};
       
+      // Group attendance records by date
+      const recordsByDate: { [date: string]: typeof attendanceData } = {};
       attendanceData
         .filter(record => record.person_id === person.id)
         .forEach(record => {
-          personAttendance[record.date] = record.status;
+          if (!recordsByDate[record.date]) {
+            recordsByDate[record.date] = [];
+          }
+          recordsByDate[record.date].push(record);
         });
+      
+      // Process each date's records
+      Object.entries(recordsByDate).forEach(([date, records]) => {
+        const morningRecord = records.find(r => r.period === 'morning');
+        const afternoonRecord = records.find(r => r.period === 'afternoon');
+        const fullDayRecord = records.find(r => r.period === 'full_day');
+        
+        personAttendance[date] = {
+          morning: (morningRecord?.status as AttendanceStatus) || null,
+          afternoon: (afternoonRecord?.status as AttendanceStatus) || null,
+          fullDay: (fullDayRecord?.status as AttendanceStatus) || null
+        };
+      });
       
       // Add recurrent patterns for dates without specific records
       const daysInMonth = getDaysInMonth(currentMonth, currentYear);
@@ -117,7 +147,11 @@ export default function ConsolidatedView() {
           );
           
           if (recurrentPattern && !isNonWorkingDay(day, currentMonth, currentYear)) {
-            personAttendance[dateKey] = recurrentPattern.status as AttendanceStatus;
+            personAttendance[dateKey] = {
+              morning: null,
+              afternoon: null,
+              fullDay: recurrentPattern.status as AttendanceStatus
+            };
           }
         }
       }
@@ -196,14 +230,49 @@ export default function ConsolidatedView() {
       date.startsWith(monthKey)
     );
     
-    const present = monthAttendance.filter(([, status]) => status === 'present').length;
-    const sickness = monthAttendance.filter(([, status]) => status === 'sickness').length;
-    const holidays = monthAttendance.filter(([, status]) => status === 'holidays').length;
-    const training = monthAttendance.filter(([, status]) => status === 'training').length;
-    const homeworking = monthAttendance.filter(([, status]) => status === 'homeworking').length;
-    const total = monthAttendance.length;
+    let present = 0, sickness = 0, holidays = 0, training = 0, homeworking = 0, totalDays = 0;
     
-    return { present, sickness, holidays, training, homeworking, total, rate: total > 0 ? Math.round((present / total) * 100) : 0 };
+    monthAttendance.forEach(([, periods]) => {
+      // Count full days
+      if (periods.fullDay) {
+        totalDays += 1;
+        if (periods.fullDay === 'present') present += 1;
+        else if (periods.fullDay === 'sickness') sickness += 1;
+        else if (periods.fullDay === 'holidays') holidays += 1;
+        else if (periods.fullDay === 'training') training += 1;
+        else if (periods.fullDay === 'homeworking') homeworking += 1;
+      } else {
+        // Count half days
+        let halfDayCount = 0;
+        if (periods.morning) {
+          halfDayCount += 0.5;
+          if (periods.morning === 'present') present += 0.5;
+          else if (periods.morning === 'sickness') sickness += 0.5;
+          else if (periods.morning === 'holidays') holidays += 0.5;
+          else if (periods.morning === 'training') training += 0.5;
+          else if (periods.morning === 'homeworking') homeworking += 0.5;
+        }
+        if (periods.afternoon) {
+          halfDayCount += 0.5;
+          if (periods.afternoon === 'present') present += 0.5;
+          else if (periods.afternoon === 'sickness') sickness += 0.5;
+          else if (periods.afternoon === 'holidays') holidays += 0.5;
+          else if (periods.afternoon === 'training') training += 0.5;
+          else if (periods.afternoon === 'homeworking') homeworking += 0.5;
+        }
+        totalDays += halfDayCount;
+      }
+    });
+    
+    return { 
+      present, 
+      sickness, 
+      holidays, 
+      training, 
+      homeworking, 
+      total: totalDays, 
+      rate: totalDays > 0 ? Math.round((present / totalDays) * 100) : 0 
+    };
   };
 
   const getStatusIcon = (status: AttendanceStatus) => {
@@ -472,12 +541,53 @@ const MONTHS = [
                             </TableCell>
                             {workingDays.map(day => {
                               const dateKey = formatDateKey(day, currentMonth, currentYear);
-                              const status = person.attendance[dateKey];
+                              const periods = person.attendance[dateKey];
+                              
+                              if (!periods) {
+                                return (
+                                  <TableCell key={day} className={`text-center ${getSprintClass(day, currentMonth)}`}>
+                                    <span className="text-lg font-bold text-muted-foreground">
+                                      {getStatusIcon(null)}
+                                    </span>
+                                  </TableCell>
+                                );
+                              }
+                              
+                              // Show full day status if present
+                              if (periods.fullDay) {
+                                return (
+                                  <TableCell key={day} className={`text-center ${getSprintClass(day, currentMonth)}`}>
+                                    <span className={`text-lg font-bold ${getStatusColor(periods.fullDay)}`}>
+                                      {getStatusIcon(periods.fullDay)}
+                                    </span>
+                                  </TableCell>
+                                );
+                              }
+                              
+                              // Show half-day statuses
+                              const hasMorning = periods.morning !== null;
+                              const hasAfternoon = periods.afternoon !== null;
+                              
+                              if (!hasMorning && !hasAfternoon) {
+                                return (
+                                  <TableCell key={day} className={`text-center ${getSprintClass(day, currentMonth)}`}>
+                                    <span className="text-lg font-bold text-muted-foreground">
+                                      {getStatusIcon(null)}
+                                    </span>
+                                  </TableCell>
+                                );
+                              }
+                              
                               return (
                                 <TableCell key={day} className={`text-center ${getSprintClass(day, currentMonth)}`}>
-                                  <span className={`text-lg font-bold ${getStatusColor(status)}`}>
-                                    {getStatusIcon(status)}
-                                  </span>
+                                  <div className="flex flex-col items-center gap-0.5">
+                                    <span className={`text-xs font-bold ${getStatusColor(periods.morning)}`}>
+                                      {hasMorning ? getStatusIcon(periods.morning) : '·'}
+                                    </span>
+                                    <span className={`text-xs font-bold ${getStatusColor(periods.afternoon)}`}>
+                                      {hasAfternoon ? getStatusIcon(periods.afternoon) : '·'}
+                                    </span>
+                                  </div>
                                 </TableCell>
                               );
                             })}
