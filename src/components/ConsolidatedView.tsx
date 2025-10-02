@@ -27,7 +27,7 @@ interface PersonWithAttendance {
 }
 
 export default function ConsolidatedView() {
-  const [currentMonth, setCurrentMonth] = useState(9); // 9 = October 2025
+  const [currentMonth, setCurrentMonth] = useState(10); // 10 = October 2025
   const [currentYear, setCurrentYear] = useState(2025);
   const [selectedTeam, setSelectedTeam] = useState<string>('All');
   const [editingCell, setEditingCell] = useState<{
@@ -45,21 +45,24 @@ export default function ConsolidatedView() {
 
   // Helper functions must be defined before useMemo that uses them
   const getDaysInMonth = (month: number, year: number = 2025) => {
-    return new Date(year, month + 1, 0).getDate();
+    return new Date(year, month, 0).getDate();
   };
 
   const formatDateKey = (day: number, month: number, year: number = 2025) => {
-    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
   const isWeekend = (day: number, month: number, year: number = 2025) => {
-    const date = new Date(year, month, day);
+    const date = new Date(year, month - 1, day);
     const dayOfWeek = date.getDay();
     return dayOfWeek === 0 || dayOfWeek === 6;
   };
 
   const isFrenchBankHoliday = (day: number, month: number, year: number = 2025) => {
-    // Fixed holidays
+    // Convert 1-indexed month to 0-indexed for comparisons
+    const month0 = month - 1;
+    
+    // Fixed holidays (using 0-indexed months)
     const fixedHolidays = [
       { month: 0, day: 1 },   // New Year's Day
       { month: 4, day: 1 },   // Labour Day
@@ -71,7 +74,7 @@ export default function ConsolidatedView() {
       { month: 11, day: 25 }, // Christmas Day
     ];
 
-    if (fixedHolidays.some(holiday => holiday.month === month && holiday.day === day)) {
+    if (fixedHolidays.some(holiday => holiday.month === month0 && holiday.day === day)) {
       return true;
     }
 
@@ -94,7 +97,7 @@ export default function ConsolidatedView() {
       const variableHolidays = [easterMonday, ascensionDay, whitMonday];
       
       return variableHolidays.some(holiday => 
-        holiday.getDate() === day && holiday.getMonth() === month
+        holiday.getDate() === day && holiday.getMonth() === month0
       );
     }
 
@@ -493,8 +496,8 @@ const MONTHS = [
               variant="outline"
               size="sm"
               onClick={() => {
-                if (currentMonth === 0) {
-                  setCurrentMonth(11);
+                if (currentMonth === 1) {
+                  setCurrentMonth(12);
                   setCurrentYear(currentYear - 1);
                 } else {
                   setCurrentMonth(currentMonth - 1);
@@ -506,15 +509,15 @@ const MONTHS = [
             </Button>
             
             <h2 className="text-xl font-bold min-w-[160px] text-center">
-              {MONTHS[currentMonth]} {currentYear}
+              {MONTHS[currentMonth - 1]} {currentYear}
             </h2>
             
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                if (currentMonth === 11) {
-                  setCurrentMonth(0);
+                if (currentMonth === 12) {
+                  setCurrentMonth(1);
                   setCurrentYear(currentYear + 1);
                 } else {
                   setCurrentMonth(currentMonth + 1);
