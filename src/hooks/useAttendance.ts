@@ -64,6 +64,8 @@ export const useUpdateAttendance = () => {
             person_id: personId,
             date,
             status,
+          }, {
+            onConflict: 'person_id,date'
           })
           .select()
           .single();
