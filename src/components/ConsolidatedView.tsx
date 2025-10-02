@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { usePeople } from '@/hooks/usePeople';
-import { useAttendance } from '@/hooks/useAttendance';
+import { useAttendance, useUpdateAttendance } from '@/hooks/useAttendance';
 import { useRecurrentAttendance } from '@/hooks/useRecurrentAttendance';
+import { toast } from 'sonner';
 
 type AttendanceStatus = 'present' | 'sickness' | 'holidays' | 'training' | 'homeworking' | null;
 
@@ -28,10 +30,18 @@ export default function ConsolidatedView() {
   const [currentMonth, setCurrentMonth] = useState(9); // 9 = October 2025
   const [currentYear, setCurrentYear] = useState(2025);
   const [selectedTeam, setSelectedTeam] = useState<string>('All');
+  const [editingCell, setEditingCell] = useState<{
+    personId: number;
+    date: string;
+    currentMorning: AttendanceStatus;
+    currentAfternoon: AttendanceStatus;
+    currentFullDay: AttendanceStatus;
+  } | null>(null);
   
   const { data: peopleData, isLoading: peopleLoading } = usePeople();
   const { data: attendanceData, isLoading: attendanceLoading } = useAttendance(currentMonth);
   const { data: recurrentPatterns } = useRecurrentAttendance();
+  const updateAttendanceMutation = useUpdateAttendance();
 
   // Helper functions must be defined before useMemo that uses them
   const getDaysInMonth = (month: number, year: number = 2025) => {
@@ -293,6 +303,101 @@ export default function ConsolidatedView() {
     return 'text-muted-foreground';
   };
 
+  const handleCellClick = (personId: number, date: string, morning: AttendanceStatus, afternoon: AttendanceStatus, fullDay: AttendanceStatus) => {
+    setEditingCell({
+      personId,
+      date,
+      currentMorning: morning,
+      currentAfternoon: afternoon,
+      currentFullDay: fullDay
+    });
+  };
+
+  const handleStatusChange = async (period: 'full_day' | 'morning' | 'afternoon', newStatus: AttendanceStatus) => {
+    if (!editingCell) return;
+
+    try {
+      // If setting a full day status, clear any half-day records first
+      if (period === 'full_day') {
+        if (editingCell.currentMorning) {
+          await updateAttendanceMutation.mutateAsync({
+            personId: editingCell.personId,
+            date: editingCell.date,
+            status: null,
+            period: 'morning',
+          });
+        }
+        if (editingCell.currentAfternoon) {
+          await updateAttendanceMutation.mutateAsync({
+            personId: editingCell.personId,
+            date: editingCell.date,
+            status: null,
+            period: 'afternoon',
+          });
+        }
+      } else {
+        // If setting a half-day status, clear full day record first
+        if (editingCell.currentFullDay) {
+          await updateAttendanceMutation.mutateAsync({
+            personId: editingCell.personId,
+            date: editingCell.date,
+            status: null,
+            period: 'full_day',
+          });
+        }
+      }
+
+      // Set the new status
+      await updateAttendanceMutation.mutateAsync({
+        personId: editingCell.personId,
+        date: editingCell.date,
+        status: newStatus,
+        period,
+      });
+
+      // Check if both half days now have the same status and merge them
+      if (period === 'morning' || period === 'afternoon') {
+        setTimeout(async () => {
+          const morningStatus = period === 'morning' ? newStatus : editingCell.currentMorning;
+          const afternoonStatus = period === 'afternoon' ? newStatus : editingCell.currentAfternoon;
+          
+          if (morningStatus && afternoonStatus && morningStatus === afternoonStatus) {
+            // Merge into full day
+            await updateAttendanceMutation.mutateAsync({
+              personId: editingCell.personId,
+              date: editingCell.date,
+              status: null,
+              period: 'morning',
+            });
+            await updateAttendanceMutation.mutateAsync({
+              personId: editingCell.personId,
+              date: editingCell.date,
+              status: null,
+              period: 'afternoon',
+            });
+            await updateAttendanceMutation.mutateAsync({
+              personId: editingCell.personId,
+              date: editingCell.date,
+              status: morningStatus,
+              period: 'full_day',
+            });
+          }
+        }, 100);
+      }
+
+      toast.success('Attendance updated');
+      setEditingCell(null);
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      toast.error('Failed to update attendance');
+    }
+  };
+
+  const getStatusLabel = (status: AttendanceStatus) => {
+    if (!status) return 'Not set';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
   // Sprint calculation functions
   const getSprintInfo = (day: number, month: number, year: number = 2025) => {
     const date = new Date(year, month, day);
@@ -545,7 +650,11 @@ const MONTHS = [
                               
                               if (!periods) {
                                 return (
-                                  <TableCell key={day} className={`text-center ${getSprintClass(day, currentMonth)}`}>
+                                  <TableCell 
+                                    key={day} 
+                                    className={`text-center cursor-pointer hover:bg-muted/50 ${getSprintClass(day, currentMonth)}`}
+                                    onClick={() => handleCellClick(person.id, dateKey, null, null, null)}
+                                  >
                                     <span className="text-lg font-bold text-muted-foreground">
                                       {getStatusIcon(null)}
                                     </span>
@@ -556,7 +665,11 @@ const MONTHS = [
                               // Show full day status if present
                               if (periods.fullDay) {
                                 return (
-                                  <TableCell key={day} className={`text-center ${getSprintClass(day, currentMonth)}`}>
+                                  <TableCell 
+                                    key={day} 
+                                    className={`text-center cursor-pointer hover:bg-muted/50 ${getSprintClass(day, currentMonth)}`}
+                                    onClick={() => handleCellClick(person.id, dateKey, null, null, periods.fullDay)}
+                                  >
                                     <span className={`text-lg font-bold ${getStatusColor(periods.fullDay)}`}>
                                       {getStatusIcon(periods.fullDay)}
                                     </span>
@@ -570,7 +683,11 @@ const MONTHS = [
                               
                               if (!hasMorning && !hasAfternoon) {
                                 return (
-                                  <TableCell key={day} className={`text-center ${getSprintClass(day, currentMonth)}`}>
+                                  <TableCell 
+                                    key={day} 
+                                    className={`text-center cursor-pointer hover:bg-muted/50 ${getSprintClass(day, currentMonth)}`}
+                                    onClick={() => handleCellClick(person.id, dateKey, null, null, null)}
+                                  >
                                     <span className="text-lg font-bold text-muted-foreground">
                                       {getStatusIcon(null)}
                                     </span>
@@ -579,7 +696,11 @@ const MONTHS = [
                               }
                               
                               return (
-                                <TableCell key={day} className={`text-center ${getSprintClass(day, currentMonth)}`}>
+                                <TableCell 
+                                  key={day} 
+                                  className={`text-center cursor-pointer hover:bg-muted/50 ${getSprintClass(day, currentMonth)}`}
+                                  onClick={() => handleCellClick(person.id, dateKey, periods.morning, periods.afternoon, null)}
+                                >
                                   <div className="flex flex-col items-center gap-0.5">
                                     <span className={`text-xs font-bold ${getStatusColor(periods.morning)}`}>
                                       {hasMorning ? getStatusIcon(periods.morning) : '·'}
@@ -639,6 +760,139 @@ const MONTHS = [
             );
           })}
         </div>
+
+        {/* Edit Dialog */}
+        <Dialog open={!!editingCell} onOpenChange={() => setEditingCell(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Attendance</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h4 className="font-semibold">Full Day</h4>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant={editingCell?.currentFullDay === 'present' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('full_day', 'present')}
+                  >
+                    ✓ Present
+                  </Button>
+                  <Button
+                    variant={editingCell?.currentFullDay === 'sickness' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('full_day', 'sickness')}
+                  >
+                    🤒 Sickness
+                  </Button>
+                  <Button
+                    variant={editingCell?.currentFullDay === 'holidays' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('full_day', 'holidays')}
+                  >
+                    🏖️ Holidays
+                  </Button>
+                  <Button
+                    variant={editingCell?.currentFullDay === 'training' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('full_day', 'training')}
+                  >
+                    📚 Training
+                  </Button>
+                  <Button
+                    variant={editingCell?.currentFullDay === 'homeworking' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('full_day', 'homeworking')}
+                  >
+                    🏠 Homeworking
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-semibold">Morning</h4>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant={editingCell?.currentMorning === 'present' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('morning', 'present')}
+                  >
+                    ✓ Present
+                  </Button>
+                  <Button
+                    variant={editingCell?.currentMorning === 'sickness' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('morning', 'sickness')}
+                  >
+                    🤒 Sickness
+                  </Button>
+                  <Button
+                    variant={editingCell?.currentMorning === 'holidays' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('morning', 'holidays')}
+                  >
+                    🏖️ Holidays
+                  </Button>
+                  <Button
+                    variant={editingCell?.currentMorning === 'training' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('morning', 'training')}
+                  >
+                    📚 Training
+                  </Button>
+                  <Button
+                    variant={editingCell?.currentMorning === 'homeworking' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('morning', 'homeworking')}
+                  >
+                    🏠 Homeworking
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-semibold">Afternoon</h4>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant={editingCell?.currentAfternoon === 'present' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('afternoon', 'present')}
+                  >
+                    ✓ Present
+                  </Button>
+                  <Button
+                    variant={editingCell?.currentAfternoon === 'sickness' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('afternoon', 'sickness')}
+                  >
+                    🤒 Sickness
+                  </Button>
+                  <Button
+                    variant={editingCell?.currentAfternoon === 'holidays' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('afternoon', 'holidays')}
+                  >
+                    🏖️ Holidays
+                  </Button>
+                  <Button
+                    variant={editingCell?.currentAfternoon === 'training' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('afternoon', 'training')}
+                  >
+                    📚 Training
+                  </Button>
+                  <Button
+                    variant={editingCell?.currentAfternoon === 'homeworking' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusChange('afternoon', 'homeworking')}
+                  >
+                    🏠 Homeworking
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
