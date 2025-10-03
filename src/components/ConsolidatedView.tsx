@@ -207,16 +207,16 @@ export default function ConsolidatedView() {
 
   if (peopleLoading || attendanceLoading) {
     return (
-      <div className="min-h-screen bg-gradient-subtle p-4">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="text-center space-y-4 animate-fade-in">
-            <div className="flex items-center justify-center gap-3">
-              <Users className="h-8 w-8 text-primary" />
-              <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+      <div className="min-h-screen bg-gradient-subtle p-2">
+        <div className="w-full mx-auto space-y-2">
+          <div className="text-center space-y-2 animate-fade-in">
+            <div className="flex items-center justify-center gap-2">
+              <Users className="h-6 w-6 text-primary" />
+              <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                 Team Attendance Overview
               </h1>
             </div>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground text-sm">
               Loading team data...
             </p>
           </div>
@@ -473,25 +473,25 @@ const MONTHS = [
   const sprintHeaders = getSprintHeaderInfo(workingDays);
 
   return (
-    <div className="min-h-screen bg-gradient-subtle p-4">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-subtle p-2">
+      <div className="w-full mx-auto space-y-2 max-w-[100vw] overflow-hidden">
         {/* Header */}
-        <div className="text-center space-y-4 animate-fade-in">
-          <div className="flex items-center justify-center gap-3">
-            <Users className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+        <div className="text-center space-y-2 animate-fade-in">
+          <div className="flex items-center justify-center gap-2">
+            <Users className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
               Team Attendance Overview
             </h1>
           </div>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-sm">
             View everyone's office presence at a glance
           </p>
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-2 items-center justify-between">
           {/* Month Navigation */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -503,12 +503,12 @@ const MONTHS = [
                   setCurrentMonth(currentMonth - 1);
                 }
               }}
-              className="hover:shadow-soft"
+              className="hover:shadow-soft h-8 w-8 p-0"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3 w-3" />
             </Button>
             
-            <h2 className="text-xl font-bold min-w-[160px] text-center">
+            <h2 className="text-base font-bold min-w-[120px] text-center">
               {MONTHS[currentMonth - 1]} {currentYear}
             </h2>
             
@@ -523,23 +523,23 @@ const MONTHS = [
                   setCurrentMonth(currentMonth + 1);
                 }
               }}
-              className="hover:shadow-soft"
+              className="hover:shadow-soft h-8 w-8 p-0"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3 w-3" />
             </Button>
           </div>
 
           {/* Team Filter */}
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <div className="flex gap-2">
+            <Filter className="h-3 w-3 text-muted-foreground" />
+            <div className="flex gap-1">
               {teams.map(team => (
                 <Button
                   key={team}
                   variant={selectedTeam === team ? "default" : "outline"}
                   size="sm"
                   onClick={() => setSelectedTeam(team)}
-                  className="hover:shadow-soft"
+                  className="hover:shadow-soft h-7 px-2 text-xs"
                 >
                   {team}
                 </Button>
@@ -550,30 +550,26 @@ const MONTHS = [
 
         {/* Sprint Legend */}
         <Card className="shadow-medium animate-fade-in">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
+          <CardContent className="p-2">
+            <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+              <div className="flex items-center gap-1">
                 <span className="font-semibold">Sprint Legend:</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-blue-50 dark:bg-blue-950/20 border border-primary border-l-4 rounded-sm"></div>
-                <span>Odd Sprints (1, 3, 5...)</span>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-blue-50 dark:bg-blue-950/20 border border-primary border-l-2 rounded-sm"></div>
+                <span>Odd Sprints</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-green-50 dark:bg-green-950/20 border border-primary border-l-4 rounded-sm"></div>
-                <span>Even Sprints (2, 4, 6...)</span>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-green-50 dark:bg-green-950/20 border border-primary border-l-2 rounded-sm"></div>
+                <span>Even Sprints</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <span className="text-xs font-mono">S1</span>
                 <span>Sprint Start</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <span className="text-xs">→</span>
                 <span>Sprint End</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs">•</span>
-                <span>Sprint Day</span>
               </div>
             </div>
           </CardContent>
@@ -581,44 +577,51 @@ const MONTHS = [
 
         {/* Attendance Table */}
         <Card className="shadow-medium animate-scale-in">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+          <CardHeader className="p-3">
+            <CardTitle className="flex items-center justify-between text-sm">
               <span>Daily Attendance - Full Month</span>
-              <Badge variant="outline" className="text-sm">
+              <Badge variant="outline" className="text-xs">
                 {Object.values(groupedPeople).flat().length} people
               </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
+          <CardContent className="p-2">
+            <div className="w-full overflow-x-hidden"
+              style={{
+                fontSize: '0.7rem',
+                transform: 'scale(0.85)',
+                transformOrigin: 'top left',
+                width: '117.6%'
+              }}
+            >
               <Table>
                 <TableHeader>
                   {/* Sprint row */}
-                  <TableRow className="border-b-2">
-                    <TableHead className="min-w-[160px] border-b-0"></TableHead>
-                    <TableHead className="min-w-[120px] border-b-0"></TableHead>
-                    <TableHead className="min-w-[100px] border-b-0"></TableHead>
+                  <TableRow className="border-b-2 h-6">
+                    <TableHead className="w-[70px] p-1 border-b-0 text-[10px]"></TableHead>
+                    <TableHead className="w-[80px] p-1 border-b-0 text-[10px]"></TableHead>
+                    <TableHead className="w-[60px] p-1 border-b-0 text-[10px]"></TableHead>
                     {workingDays.map(day => {
                       const sprintInfo = sprintHeaders[day];
                       return (
-                        <TableHead key={`sprint-${day}`} className={`text-center min-w-[50px] border-b-0 text-xs font-medium ${sprintInfo ? getSprintClass(day, currentMonth) : ''}`}>
+                        <TableHead key={`sprint-${day}`} className={`text-center w-[28px] p-0.5 border-b-0 text-[9px] font-medium ${sprintInfo ? getSprintClass(day, currentMonth) : ''}`}>
                           {sprintInfo?.isStart ? `S${sprintInfo.sprintNumber}` : sprintInfo?.isEnd ? '→' : sprintInfo ? '•' : ''}
                         </TableHead>
                       );
                     })}
-                    <TableHead className="text-center min-w-[80px] border-b-0"></TableHead>
+                    <TableHead className="text-center w-[40px] p-1 border-b-0 text-[10px]"></TableHead>
                   </TableRow>
                   {/* Day row */}
-                  <TableRow>
-                    <TableHead className="min-w-[160px]">Name</TableHead>
-                    <TableHead className="min-w-[120px]">Role</TableHead>
-                    <TableHead className="min-w-[100px]">Team</TableHead>
+                  <TableRow className="h-6">
+                    <TableHead className="w-[70px] p-1 text-[10px]">Name</TableHead>
+                    <TableHead className="w-[80px] p-1 text-[10px]">Role</TableHead>
+                    <TableHead className="w-[60px] p-1 text-[10px]">Team</TableHead>
                     {workingDays.map(day => (
-                      <TableHead key={day} className={`text-center min-w-[50px] ${getSprintClass(day, currentMonth)}`}>
+                      <TableHead key={day} className={`text-center w-[28px] p-0.5 text-[10px] ${getSprintClass(day, currentMonth)}`}>
                         {day}
                       </TableHead>
                     ))}
-                    <TableHead className="text-center min-w-[80px]">Rate</TableHead>
+                    <TableHead className="text-center w-[40px] p-1 text-[10px]">Rate</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -626,11 +629,11 @@ const MONTHS = [
                     <React.Fragment key={teamName}>
                       {/* Team Header Row */}
                       {selectedTeam === 'All' && (
-                        <TableRow className="bg-muted/30 hover:bg-muted/30">
-                          <TableCell colSpan={workingDays.length + 4} className="font-bold text-lg py-4">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-5 w-5 text-primary" />
-                              {teamName} ({teamMembers.length} members)
+                        <TableRow className="bg-muted/30 hover:bg-muted/30 h-6">
+                          <TableCell colSpan={workingDays.length + 4} className="font-bold text-[11px] py-1 p-1">
+                            <div className="flex items-center gap-1">
+                              <Users className="h-3 w-3 text-primary" />
+                              {teamName} ({teamMembers.length})
                             </div>
                           </TableCell>
                         </TableRow>
@@ -639,11 +642,11 @@ const MONTHS = [
                       {teamMembers.map(person => {
                         const stats = getPersonStats(person, currentMonth, currentYear);
                         return (
-                          <TableRow key={person.id} className="hover:bg-muted/50">
-                            <TableCell className="font-medium">{person.trigramme}</TableCell>
-                            <TableCell className="text-muted-foreground">{person.role}</TableCell>
-                            <TableCell>
-                              <Badge variant="secondary" className="text-xs">
+                          <TableRow key={person.id} className="hover:bg-muted/50 h-7">
+                            <TableCell className="font-medium p-1 text-[10px]">{person.trigramme}</TableCell>
+                            <TableCell className="text-muted-foreground p-1 text-[9px] truncate max-w-[80px]">{person.role}</TableCell>
+                            <TableCell className="p-1">
+                              <Badge variant="secondary" className="text-[8px] px-1 py-0">
                                 {person.team}
                               </Badge>
                             </TableCell>
@@ -655,10 +658,10 @@ const MONTHS = [
                                 return (
                                   <TableCell 
                                     key={day} 
-                                    className={`text-center cursor-pointer hover:bg-muted/50 ${getSprintClass(day, currentMonth)}`}
+                                    className={`text-center cursor-pointer hover:bg-muted/50 p-0.5 ${getSprintClass(day, currentMonth)}`}
                                     onClick={() => handleCellClick(person.id, dateKey, null, null, null)}
                                   >
-                                    <span className="text-lg font-bold text-muted-foreground">
+                                    <span className="text-sm font-bold text-muted-foreground">
                                       {getStatusIcon(null)}
                                     </span>
                                   </TableCell>
@@ -670,10 +673,10 @@ const MONTHS = [
                                 return (
                                   <TableCell 
                                     key={day} 
-                                    className={`text-center cursor-pointer hover:bg-muted/50 ${getSprintClass(day, currentMonth)}`}
+                                    className={`text-center cursor-pointer hover:bg-muted/50 p-0.5 ${getSprintClass(day, currentMonth)}`}
                                     onClick={() => handleCellClick(person.id, dateKey, null, null, periods.fullDay)}
                                   >
-                                    <span className={`text-lg font-bold ${getStatusColor(periods.fullDay)}`}>
+                                    <span className={`text-sm font-bold ${getStatusColor(periods.fullDay)}`}>
                                       {getStatusIcon(periods.fullDay)}
                                     </span>
                                   </TableCell>
@@ -688,10 +691,10 @@ const MONTHS = [
                                 return (
                                   <TableCell 
                                     key={day} 
-                                    className={`text-center cursor-pointer hover:bg-muted/50 ${getSprintClass(day, currentMonth)}`}
+                                    className={`text-center cursor-pointer hover:bg-muted/50 p-0.5 ${getSprintClass(day, currentMonth)}`}
                                     onClick={() => handleCellClick(person.id, dateKey, null, null, null)}
                                   >
-                                    <span className="text-lg font-bold text-muted-foreground">
+                                    <span className="text-sm font-bold text-muted-foreground">
                                       {getStatusIcon(null)}
                                     </span>
                                   </TableCell>
@@ -701,22 +704,22 @@ const MONTHS = [
                               return (
                                 <TableCell 
                                   key={day} 
-                                  className={`text-center cursor-pointer hover:bg-muted/50 ${getSprintClass(day, currentMonth)}`}
+                                  className={`text-center cursor-pointer hover:bg-muted/50 p-0 ${getSprintClass(day, currentMonth)}`}
                                   onClick={() => handleCellClick(person.id, dateKey, periods.morning, periods.afternoon, null)}
                                 >
-                                  <div className="flex flex-col items-center gap-0.5">
-                                    <span className={`text-xs font-bold ${getStatusColor(periods.morning)}`}>
+                                  <div className="flex flex-col items-center gap-0">
+                                    <span className={`text-[10px] leading-[10px] font-bold ${getStatusColor(periods.morning)}`}>
                                       {hasMorning ? getStatusIcon(periods.morning) : '·'}
                                     </span>
-                                    <span className={`text-xs font-bold ${getStatusColor(periods.afternoon)}`}>
+                                    <span className={`text-[10px] leading-[10px] font-bold ${getStatusColor(periods.afternoon)}`}>
                                       {hasAfternoon ? getStatusIcon(periods.afternoon) : '·'}
                                     </span>
                                   </div>
                                 </TableCell>
                               );
                             })}
-                            <TableCell className="text-center">
-                              <span className={`font-bold ${stats.rate >= 80 ? 'text-present' : stats.rate >= 60 ? 'text-warning' : 'text-absent'}`}>
+                            <TableCell className="text-center p-1">
+                              <span className={`font-bold text-[10px] ${stats.rate >= 80 ? 'text-present' : stats.rate >= 60 ? 'text-warning' : 'text-absent'}`}>
                                 {stats.rate}%
                               </span>
                             </TableCell>
@@ -732,7 +735,7 @@ const MONTHS = [
         </Card>
 
         {/* Team Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 animate-fade-in">
           {teams.filter(team => team !== 'All').map(team => {
             const teamPeople = people.filter(p => p.team === team);
             const totalPresent = teamPeople.reduce((acc, person) => {
@@ -747,15 +750,15 @@ const MONTHS = [
 
             return (
               <Card key={team} className="shadow-medium">
-                <CardContent className="p-4">
-                  <div className="text-center space-y-2">
-                    <h3 className="font-semibold text-lg">{team}</h3>
-                    <div className="text-2xl font-bold text-primary">{teamRate}%</div>
-                    <p className="text-sm text-muted-foreground">
+                <CardContent className="p-2">
+                  <div className="text-center space-y-1">
+                    <h3 className="font-semibold text-xs">{team}</h3>
+                    <div className="text-lg font-bold text-primary">{teamRate}%</div>
+                    <p className="text-[10px] text-muted-foreground">
                       {teamPeople.length} member{teamPeople.length !== 1 ? 's' : ''}
                     </p>
-                    <div className="text-xs text-muted-foreground">
-                      {totalPresent}/{totalPossible} days present
+                    <div className="text-[9px] text-muted-foreground">
+                      {totalPresent}/{totalPossible} days
                     </div>
                   </div>
                 </CardContent>
