@@ -224,8 +224,8 @@ const TrigrammeView = () => {
     
     let classes = '';
     
-    // Alternate sprint background colors
-    if (sprintInfo.sprintNumber % 2 === 1) {
+    // Alternate sprint background colors (58, 62, 66... vs 60, 64, 68...)
+    if ((sprintInfo.sprintNumber / 2) % 2 === 0) {
       classes += 'bg-blue-50 dark:bg-blue-950/20 ';
     } else {
       classes += 'bg-green-50 dark:bg-green-950/20 ';

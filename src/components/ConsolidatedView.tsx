@@ -444,8 +444,8 @@ export default function ConsolidatedView() {
     
     let classes = '';
     
-    // Alternate sprint background colors
-    if (sprintInfo.sprintNumber % 2 === 1) {
+    // Alternate sprint background colors (46, 50, 54... vs 48, 52, 56...)
+    if ((sprintInfo.sprintNumber / 2) % 2 === 0) {
       classes += 'bg-blue-50 dark:bg-blue-950/20 ';
     } else {
       classes += 'bg-green-50 dark:bg-green-950/20 ';
