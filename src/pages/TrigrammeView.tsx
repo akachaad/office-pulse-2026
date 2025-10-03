@@ -198,7 +198,7 @@ const TrigrammeView = () => {
   // Sprint calculation functions
   const getSprintInfo = (day: number, month: number, year: number = 2026) => {
     const date = new Date(year, month, day);
-    const sprintStartDate = new Date(2026, 0, 5); // January 5th, 2026
+    const sprintStartDate = new Date(2026, 0, 5); // January 5th, 2026 (Monday) - Sprint 58
     
     // Calculate days since sprint start
     const daysSinceStart = Math.floor((date.getTime() - sprintStartDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -207,7 +207,8 @@ const TrigrammeView = () => {
       return { sprintNumber: 0, isSprintBoundary: false, isSprintStart: false, isSprintEnd: false };
     }
     
-    const sprintNumber = Math.floor(daysSinceStart / 14) + 1;
+    // Sprint 58 starts on Jan 5, 2026, then 60, 62, etc. (increment by 2)
+    const sprintNumber = Math.floor(daysSinceStart / 14) * 2 + 58;
     const dayInSprint = daysSinceStart % 14;
     const isSprintStart = dayInSprint === 0;
     const isSprintEnd = dayInSprint === 13;

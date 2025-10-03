@@ -418,7 +418,7 @@ export default function ConsolidatedView() {
   // Sprint calculation functions
   const getSprintInfo = (day: number, month: number, year: number = 2025) => {
     const date = new Date(year, month, day);
-    const sprintStartDate = new Date(2025, 9, 6); // October 6th, 2025
+    const sprintStartDate = new Date(2025, 9, 6); // October 6th, 2025 (Monday) - Sprint 46
     
     // Calculate days since sprint start
     const daysSinceStart = Math.floor((date.getTime() - sprintStartDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -427,7 +427,8 @@ export default function ConsolidatedView() {
       return { sprintNumber: 0, isSprintBoundary: false, isSprintStart: false, isSprintEnd: false };
     }
     
-    const sprintNumber = Math.floor(daysSinceStart / 14) + 1;
+    // Sprint 46 starts on Oct 6, 2025, then 48, 50, etc. (increment by 2)
+    const sprintNumber = Math.floor(daysSinceStart / 14) * 2 + 46;
     const dayInSprint = daysSinceStart % 14;
     const isSprintStart = dayInSprint === 0;
     const isSprintEnd = dayInSprint === 13;
