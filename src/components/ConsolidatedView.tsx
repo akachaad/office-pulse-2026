@@ -131,7 +131,7 @@ export default function ConsolidatedView() {
         }
       } = {};
       
-      // Group attendance records by date
+      // First, collect all specific attendance records
       const recordsByDate: { [date: string]: typeof attendanceData } = {};
       attendanceData
         .filter(record => record.person_id === person.id)
@@ -142,7 +142,7 @@ export default function ConsolidatedView() {
           recordsByDate[record.date].push(record);
         });
       
-      // Process each date's records
+      // Process each date's specific records
       Object.entries(recordsByDate).forEach(([date, records]) => {
         const morningRecord = records.find(r => r.period === 'morning');
         const afternoonRecord = records.find(r => r.period === 'afternoon');
@@ -155,46 +155,26 @@ export default function ConsolidatedView() {
         };
       });
       
-      // Add recurrent patterns for dates without specific records
+      // Then, apply recurrent patterns - these OVERRIDE specific records
       const daysInMonth = getDaysInMonth(currentMonth, currentYear);
-      
-      if (person.trigramme === 'VGR') {
-        console.log(`Processing VGR (person_id: ${person.id})`);
-        console.log('Recurrent patterns available:', recurrentPatterns);
-      }
       
       for (let day = 1; day <= daysInMonth; day++) {
         const dateKey = formatDateKey(day, currentMonth, currentYear);
+        const date = new Date(currentYear, currentMonth - 1, day);
+        const dayOfWeek = date.getDay();
         
-        // Only apply recurrent pattern if no specific record exists
-        if (!personAttendance[dateKey]) {
-          const date = new Date(currentYear, currentMonth - 1, day);
-          const dayOfWeek = date.getDay();
-          
-          if (person.trigramme === 'VGR') {
-            console.log(`VGR - Day ${day} (${dateKey}): dayOfWeek=${dayOfWeek}, isNonWorking=${isNonWorkingDay(day, currentMonth, currentYear)}`);
-          }
-          
-          const recurrentPattern = recurrentPatterns?.find(
-            p => p.person_id === person.id && p.day_of_week === dayOfWeek
-          );
-          
-          if (person.trigramme === 'VGR' && recurrentPattern) {
-            console.log(`VGR - Found pattern for day ${day}:`, recurrentPattern);
-          }
-          
-          if (recurrentPattern && !isNonWorkingDay(day, currentMonth, currentYear)) {
-            personAttendance[dateKey] = {
-              morning: null,
-              afternoon: null,
-              fullDay: recurrentPattern.status as AttendanceStatus
-            };
-            if (person.trigramme === 'VGR') {
-              console.log(`VGR - Applied pattern for ${dateKey}:`, recurrentPattern.status);
-            }
-          }
-        } else if (person.trigramme === 'VGR') {
-          console.log(`VGR - Skipping ${dateKey} (already has attendance):`, personAttendance[dateKey]);
+        // Check if there's a recurrent pattern for this day of week
+        const recurrentPattern = recurrentPatterns?.find(
+          p => p.person_id === person.id && p.day_of_week === dayOfWeek
+        );
+        
+        // Recurrent pattern overrides any specific attendance if it exists
+        if (recurrentPattern && !isNonWorkingDay(day, currentMonth, currentYear)) {
+          personAttendance[dateKey] = {
+            morning: null,
+            afternoon: null,
+            fullDay: recurrentPattern.status as AttendanceStatus
+          };
         }
       }
       
