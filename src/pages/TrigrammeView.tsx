@@ -196,9 +196,18 @@ const TrigrammeView = () => {
   };
 
   // Sprint calculation functions
-  const getSprintInfo = (day: number, month: number, year: number = 2026) => {
+  const getSprintInfo = (day: number, month: number, year: number = 2025) => {
     const date = new Date(year, month, day);
-    const sprintStartDate = new Date(2026, 0, 5); // January 5th, 2026 (Monday) - Sprint 58
+    let sprintStartDate: Date;
+    let baseSprintNumber: number;
+    
+    if (year >= 2026) {
+      sprintStartDate = new Date(2026, 0, 5); // January 5th, 2026 (Monday) - Sprint 58
+      baseSprintNumber = 58;
+    } else {
+      sprintStartDate = new Date(2025, 9, 6); // October 6th, 2025 (Monday) - Sprint 46
+      baseSprintNumber = 46;
+    }
     
     // Calculate days since sprint start
     const daysSinceStart = Math.floor((date.getTime() - sprintStartDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -207,8 +216,8 @@ const TrigrammeView = () => {
       return { sprintNumber: 0, isSprintBoundary: false, isSprintStart: false, isSprintEnd: false };
     }
     
-    // Sprint 58 starts on Jan 5, 2026, then 60, 62, etc. (increment by 2)
-    const sprintNumber = Math.floor(daysSinceStart / 14) * 2 + 58;
+    // Sprint increments by 2 every 14 days
+    const sprintNumber = Math.floor(daysSinceStart / 14) * 2 + baseSprintNumber;
     const dayInSprint = daysSinceStart % 14;
     const isSprintStart = dayInSprint === 0;
     const isSprintEnd = dayInSprint === 13;
@@ -218,7 +227,7 @@ const TrigrammeView = () => {
   };
 
   const getSprintClass = (day: Date) => {
-    const sprintInfo = getSprintInfo(day.getDate(), day.getMonth());
+    const sprintInfo = getSprintInfo(day.getDate(), day.getMonth(), day.getFullYear());
     
     if (sprintInfo.sprintNumber === 0) return '';
     
@@ -243,7 +252,7 @@ const TrigrammeView = () => {
   };
 
   const getSprintIndicator = (day: Date) => {
-    const sprintInfo = getSprintInfo(day.getDate(), day.getMonth());
+    const sprintInfo = getSprintInfo(day.getDate(), day.getMonth(), day.getFullYear());
     
     if (sprintInfo.sprintNumber === 0) return '';
     

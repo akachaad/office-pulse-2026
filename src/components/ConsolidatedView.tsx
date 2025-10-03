@@ -418,7 +418,16 @@ export default function ConsolidatedView() {
   // Sprint calculation functions
   const getSprintInfo = (day: number, month: number, year: number = 2025) => {
     const date = new Date(year, month, day);
-    const sprintStartDate = new Date(2025, 9, 6); // October 6th, 2025 (Monday) - Sprint 46
+    let sprintStartDate: Date;
+    let baseSprintNumber: number;
+    
+    if (year >= 2026) {
+      sprintStartDate = new Date(2026, 0, 5); // January 5th, 2026 (Monday) - Sprint 58
+      baseSprintNumber = 58;
+    } else {
+      sprintStartDate = new Date(2025, 9, 6); // October 6th, 2025 (Monday) - Sprint 46
+      baseSprintNumber = 46;
+    }
     
     // Calculate days since sprint start
     const daysSinceStart = Math.floor((date.getTime() - sprintStartDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -427,8 +436,8 @@ export default function ConsolidatedView() {
       return { sprintNumber: 0, isSprintBoundary: false, isSprintStart: false, isSprintEnd: false };
     }
     
-    // Sprint 46 starts on Oct 6, 2025, then 48, 50, etc. (increment by 2)
-    const sprintNumber = Math.floor(daysSinceStart / 14) * 2 + 46;
+    // Sprint increments by 2 every 14 days
+    const sprintNumber = Math.floor(daysSinceStart / 14) * 2 + baseSprintNumber;
     const dayInSprint = daysSinceStart % 14;
     const isSprintStart = dayInSprint === 0;
     const isSprintEnd = dayInSprint === 13;
@@ -437,8 +446,8 @@ export default function ConsolidatedView() {
     return { sprintNumber, isSprintBoundary, isSprintStart, isSprintEnd };
   };
 
-  const getSprintClass = (day: number, month: number) => {
-    const sprintInfo = getSprintInfo(day, month);
+  const getSprintClass = (day: number, month: number, year: number) => {
+    const sprintInfo = getSprintInfo(day, month, year);
     
     if (sprintInfo.sprintNumber === 0) return '';
     
@@ -609,7 +618,7 @@ const MONTHS = [
                     {workingDays.map(day => {
                       const sprintInfo = sprintHeaders[day];
                       return (
-                        <TableHead key={`sprint-${day}`} className={`text-center w-[32px] p-1 border-b-0 text-[10px] font-medium ${sprintInfo ? getSprintClass(day, currentMonth) : ''}`}>
+                        <TableHead key={`sprint-${day}`} className={`text-center w-[32px] p-1 border-b-0 text-[10px] font-medium ${sprintInfo ? getSprintClass(day, currentMonth, currentYear) : ''}`}>
                           {sprintInfo?.isStart ? `S${sprintInfo.sprintNumber}` : sprintInfo?.isEnd ? '→' : sprintInfo ? '•' : ''}
                         </TableHead>
                       );
@@ -622,7 +631,7 @@ const MONTHS = [
                     <TableHead className="w-[110px] p-1.5 text-xs">Role</TableHead>
                     <TableHead className="w-[80px] p-1.5 text-xs">Team</TableHead>
                     {workingDays.map(day => (
-                      <TableHead key={day} className={`text-center w-[32px] p-1 text-xs ${getSprintClass(day, currentMonth)}`}>
+                      <TableHead key={day} className={`text-center w-[32px] p-1 text-xs ${getSprintClass(day, currentMonth, currentYear)}`}>
                         {day}
                       </TableHead>
                     ))}
@@ -663,7 +672,7 @@ const MONTHS = [
                                 return (
                                   <TableCell 
                                     key={day} 
-                                    className={`text-center cursor-pointer hover:bg-muted/50 p-1 ${getSprintClass(day, currentMonth)}`}
+                                    className={`text-center cursor-pointer hover:bg-muted/50 p-1 ${getSprintClass(day, currentMonth, currentYear)}`}
                                     onClick={() => handleCellClick(person.id, dateKey, null, null, null)}
                                   >
                                     <span className="text-sm font-bold text-muted-foreground">
@@ -678,7 +687,7 @@ const MONTHS = [
                                 return (
                                   <TableCell 
                                     key={day} 
-                                    className={`text-center cursor-pointer hover:bg-muted/50 p-1 ${getSprintClass(day, currentMonth)}`}
+                                    className={`text-center cursor-pointer hover:bg-muted/50 p-1 ${getSprintClass(day, currentMonth, currentYear)}`}
                                     onClick={() => handleCellClick(person.id, dateKey, null, null, periods.fullDay)}
                                   >
                                     <span className={`text-sm font-bold ${getStatusColor(periods.fullDay)}`}>
@@ -696,7 +705,7 @@ const MONTHS = [
                                 return (
                                   <TableCell 
                                     key={day} 
-                                    className={`text-center cursor-pointer hover:bg-muted/50 p-1 ${getSprintClass(day, currentMonth)}`}
+                                    className={`text-center cursor-pointer hover:bg-muted/50 p-1 ${getSprintClass(day, currentMonth, currentYear)}`}
                                     onClick={() => handleCellClick(person.id, dateKey, null, null, null)}
                                   >
                                     <span className="text-sm font-bold text-muted-foreground">
@@ -709,7 +718,7 @@ const MONTHS = [
                               return (
                                 <TableCell 
                                   key={day} 
-                                  className={`text-center cursor-pointer hover:bg-muted/50 p-0.5 ${getSprintClass(day, currentMonth)}`}
+                                  className={`text-center cursor-pointer hover:bg-muted/50 p-0.5 ${getSprintClass(day, currentMonth, currentYear)}`}
                                   onClick={() => handleCellClick(person.id, dateKey, periods.morning, periods.afternoon, null)}
                                 >
                                   <div className="flex flex-col items-center gap-0">
