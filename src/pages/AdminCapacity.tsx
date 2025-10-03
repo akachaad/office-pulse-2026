@@ -9,6 +9,7 @@ import { usePeople, Person } from '@/hooks/usePeople';
 import { supabase } from '@/integrations/supabase/client';
 import { Settings, Save, User } from 'lucide-react';
 import Navigation from '@/components/Navigation';
+import { AddPersonDialog } from '@/components/AddPersonDialog';
 import { z } from 'zod';
 
 const capacitySchema = z.number()
@@ -125,9 +126,12 @@ const AdminCapacity = () => {
       <Navigation />
       
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
-          <Settings className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Developer Capacity Management</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Settings className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground">Developer Capacity Management</h1>
+          </div>
+          <AddPersonDialog onPersonAdded={refetch} />
         </div>
 
         <Card className="shadow-medium">

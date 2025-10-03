@@ -59,6 +59,7 @@ export type Database = {
           id: number
           nature: string | null
           role: string | null
+          start_date: string | null
           team: string | null
           trigramme: string | null
           user_id: string | null
@@ -69,6 +70,7 @@ export type Database = {
           id?: number
           nature?: string | null
           role?: string | null
+          start_date?: string | null
           team?: string | null
           trigramme?: string | null
           user_id?: string | null
@@ -79,6 +81,7 @@ export type Database = {
           id?: number
           nature?: string | null
           role?: string | null
+          start_date?: string | null
           team?: string | null
           trigramme?: string | null
           user_id?: string | null
