@@ -157,6 +157,12 @@ export default function ConsolidatedView() {
       
       // Add recurrent patterns for dates without specific records
       const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+      
+      if (person.trigramme === 'VGR') {
+        console.log(`Processing VGR (person_id: ${person.id})`);
+        console.log('Recurrent patterns available:', recurrentPatterns);
+      }
+      
       for (let day = 1; day <= daysInMonth; day++) {
         const dateKey = formatDateKey(day, currentMonth, currentYear);
         
@@ -165,12 +171,16 @@ export default function ConsolidatedView() {
           const date = new Date(currentYear, currentMonth - 1, day);
           const dayOfWeek = date.getDay();
           
+          if (person.trigramme === 'VGR') {
+            console.log(`VGR - Day ${day} (${dateKey}): dayOfWeek=${dayOfWeek}, isNonWorking=${isNonWorkingDay(day, currentMonth, currentYear)}`);
+          }
+          
           const recurrentPattern = recurrentPatterns?.find(
             p => p.person_id === person.id && p.day_of_week === dayOfWeek
           );
           
-          if (recurrentPattern) {
-            console.log(`Applying recurrent pattern for ${person.trigramme} on ${dateKey} (day ${dayOfWeek}):`, recurrentPattern.status);
+          if (person.trigramme === 'VGR' && recurrentPattern) {
+            console.log(`VGR - Found pattern for day ${day}:`, recurrentPattern);
           }
           
           if (recurrentPattern && !isNonWorkingDay(day, currentMonth, currentYear)) {
@@ -179,7 +189,12 @@ export default function ConsolidatedView() {
               afternoon: null,
               fullDay: recurrentPattern.status as AttendanceStatus
             };
+            if (person.trigramme === 'VGR') {
+              console.log(`VGR - Applied pattern for ${dateKey}:`, recurrentPattern.status);
+            }
           }
+        } else if (person.trigramme === 'VGR') {
+          console.log(`VGR - Skipping ${dateKey} (already has attendance):`, personAttendance[dateKey]);
         }
       }
       
