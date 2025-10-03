@@ -27,7 +27,7 @@ interface PersonWithAttendance {
 }
 
 export default function ConsolidatedView() {
-  const [currentMonth, setCurrentMonth] = useState(10); // 10 = October 2025
+  const [currentMonth, setCurrentMonth] = useState(9); // 9 = October (0-indexed)
   const [currentYear, setCurrentYear] = useState(2025);
   const [selectedTeam, setSelectedTeam] = useState<string>('All');
   const [editingCell, setEditingCell] = useState<{
