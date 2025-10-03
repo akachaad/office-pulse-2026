@@ -43,6 +43,13 @@ export default function ConsolidatedView() {
   const { data: recurrentPatterns } = useRecurrentAttendance();
   const updateAttendanceMutation = useUpdateAttendance();
 
+  // Debug recurrent patterns
+  React.useEffect(() => {
+    if (recurrentPatterns) {
+      console.log('Recurrent patterns loaded:', recurrentPatterns);
+    }
+  }, [recurrentPatterns]);
+
   // Helper functions must be defined before useMemo that uses them
   const getDaysInMonth = (month: number, year: number = 2025) => {
     return new Date(year, month, 0).getDate();
@@ -158,6 +165,10 @@ export default function ConsolidatedView() {
           const recurrentPattern = recurrentPatterns?.find(
             p => p.person_id === person.id && p.day_of_week === dayOfWeek
           );
+          
+          if (recurrentPattern) {
+            console.log(`Applying recurrent pattern for ${person.trigramme} on ${dateKey} (day ${dayOfWeek}):`, recurrentPattern.status);
+          }
           
           if (recurrentPattern && !isNonWorkingDay(day, currentMonth, currentYear)) {
             personAttendance[dateKey] = {
