@@ -40,15 +40,18 @@ export default function ConsolidatedView() {
   
   const { data: peopleData, isLoading: peopleLoading } = usePeople();
   const { data: attendanceData, isLoading: attendanceLoading } = useAttendance(currentMonth);
-  const { data: recurrentPatterns } = useRecurrentAttendance();
+  const { data: recurrentPatterns, error: recurrentError, isLoading: recurrentLoading } = useRecurrentAttendance();
   const updateAttendanceMutation = useUpdateAttendance();
 
   // Debug recurrent patterns
   React.useEffect(() => {
-    if (recurrentPatterns) {
-      console.log('Recurrent patterns loaded:', recurrentPatterns);
-    }
-  }, [recurrentPatterns]);
+    console.log('Recurrent patterns state:', { 
+      data: recurrentPatterns, 
+      error: recurrentError,
+      isLoading: recurrentLoading,
+      count: recurrentPatterns?.length 
+    });
+  }, [recurrentPatterns, recurrentError, recurrentLoading]);
 
   // Helper functions must be defined before useMemo that uses them
   const getDaysInMonth = (month: number, year: number = 2025) => {
