@@ -30,7 +30,7 @@ export const usePeople = () => {
         id: person.id,
         role: person.role || 'Team Member',
         team: person.team || 'General',
-        capacity: person.capacity || 0,
+        capacity: person.capacity ?? 0,
         nature: person.nature || '',
         trigramme: person.trigramme || 'N/A',
         created_at: person.created_at,

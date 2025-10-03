@@ -35,7 +35,7 @@ const AdminCapacity = () => {
     if (developers.length > 0) {
       const initialCapacities: Record<number, number> = {};
       developers.forEach(dev => {
-        initialCapacities[dev.id] = dev.capacity || 1;
+        initialCapacities[dev.id] = dev.capacity ?? 1;
       });
       setCapacities(initialCapacities);
     }
@@ -175,7 +175,7 @@ const AdminCapacity = () => {
                       <TableCell>{dev.nature || 'N/A'}</TableCell>
                       <TableCell>
                         <Badge variant="secondary">
-                          {dev.capacity || 1}
+                          {dev.capacity ?? 1}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -184,7 +184,7 @@ const AdminCapacity = () => {
                           min="0"
                           max="1"
                           step="0.1"
-                          value={capacities[dev.id] || 1}
+                          value={capacities[dev.id] ?? 1}
                           onChange={(e) => handleCapacityChange(dev.id, e.target.value)}
                           className="w-24"
                           placeholder="0.0"
