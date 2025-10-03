@@ -235,7 +235,7 @@ export default function ConsolidatedView() {
   };
 
   const getPersonStats = (person: PersonWithAttendance, month: number, year: number) => {
-    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+    const monthKey = `${year}-${String(month).padStart(2, '0')}`;
     const monthAttendance = Object.entries(person.attendance).filter(([date]) => 
       date.startsWith(monthKey)
     );
