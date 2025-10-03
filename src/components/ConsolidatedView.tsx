@@ -152,7 +152,7 @@ export default function ConsolidatedView() {
         
         // Only apply recurrent pattern if no specific record exists
         if (!personAttendance[dateKey]) {
-          const date = new Date(currentYear, currentMonth, day);
+          const date = new Date(currentYear, currentMonth - 1, day);
           const dayOfWeek = date.getDay();
           
           const recurrentPattern = recurrentPatterns?.find(
