@@ -242,7 +242,15 @@ export default function ConsolidatedView() {
     
     let present = 0, sickness = 0, holidays = 0, training = 0, homeworking = 0, totalDays = 0;
     
-    monthAttendance.forEach(([, periods]) => {
+    monthAttendance.forEach(([date, periods]) => {
+      // Extract day from date (format: YYYY-MM-DD)
+      const day = parseInt(date.split('-')[2], 10);
+      
+      // Skip if it's a weekend or bank holiday
+      if (isNonWorkingDay(day, month, year)) {
+        return;
+      }
+      
       // Count full days
       if (periods.fullDay) {
         totalDays += 1;
