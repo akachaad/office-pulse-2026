@@ -608,7 +608,7 @@ const MONTHS = [
                         {day}
                       </TableHead>
                     ))}
-                    <TableHead className="text-center w-[50px] p-1.5 text-xs">Rate</TableHead>
+                    <TableHead className="text-center w-[50px] p-1.5 text-xs">Days</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -706,8 +706,8 @@ const MONTHS = [
                               );
                             })}
                             <TableCell className="text-center p-1.5">
-                              <span className={`font-bold text-xs ${stats.rate >= 80 ? 'text-present' : stats.rate >= 60 ? 'text-warning' : 'text-absent'}`}>
-                                {stats.rate}%
+                              <span className="font-bold text-xs text-primary">
+                                {stats.present + stats.homeworking}
                               </span>
                             </TableCell>
                           </TableRow>
