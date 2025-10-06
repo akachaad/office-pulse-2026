@@ -7,8 +7,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import { usePeople, Person } from '@/hooks/usePeople';
-import { useAttendance } from '@/hooks/useAttendance';
-import { supabase } from '@/integrations/supabase/client';
+import { useAttendance, useUpdateAttendance } from '@/hooks/useAttendance';
 import { CalendarIcon, Users, Save, Plus } from 'lucide-react';
 import { format, eachDayOfInterval } from 'date-fns';
 import Navigation from '@/components/Navigation';
@@ -30,7 +29,8 @@ const attendanceSchema = z.object({
 
 const AdminAttendance = () => {
   const { data: people, isLoading: peopleLoading } = usePeople();
-  const { data: attendance, refetch: refetchAttendance } = useAttendance();
+  const { data: attendance } = useAttendance();
+  const updateAttendance = useUpdateAttendance();
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>();
   const [selectedStatus, setSelectedStatus] = useState<string>('');
@@ -89,33 +89,16 @@ const AdminAttendance = () => {
         ? eachDayOfInterval({ start: selectedDateRange.from, end: selectedDateRange.to })
         : [selectedDateRange.from];
 
-      // Process each date
+      // Process each date using the mutation hook
       for (const date of dates) {
         const dateStr = format(date, 'yyyy-MM-dd');
         
-        // Check if attendance record already exists
-        const existingRecord = getPersonCurrentStatus(selectedPerson, date);
-        
-        if (existingRecord) {
-          // Update existing record
-          const { error } = await supabase
-            .from('attendance')
-            .update({ status: selectedStatus })
-            .eq('id', existingRecord.id);
-
-          if (error) throw error;
-        } else {
-          // Create new record
-          const { error } = await supabase
-            .from('attendance')
-            .insert({
-              person_id: selectedPerson.id,
-              date: dateStr,
-              status: selectedStatus
-            });
-
-          if (error) throw error;
-        }
+        await updateAttendance.mutateAsync({
+          personId: selectedPerson.id,
+          date: dateStr,
+          status: selectedStatus as 'present' | 'sickness' | 'holidays' | 'training' | 'homeworking',
+          period: 'full_day'
+        });
       }
 
       const dateText = selectedDateRange.to 
@@ -126,8 +109,6 @@ const AdminAttendance = () => {
         title: "Success",
         description: `Attendance updated for ${selectedPerson.trigramme} (${dateText})`,
       });
-      
-      refetchAttendance();
       
       // Reset form
       setSelectedDateRange(undefined);
