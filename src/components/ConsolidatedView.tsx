@@ -489,6 +489,55 @@ export default function ConsolidatedView() {
     return sprintHeaders;
   };
 
+  // Calculate sprint capacity for each day
+  const getSprintCapacities = (workingDays: number[]) => {
+    const capacityByDay: { [key: number]: number } = {};
+    
+    workingDays.forEach(day => {
+      const dateKey = formatDateKey(day, currentMonth, currentYear);
+      let dayCapacity = 0;
+      
+      // Sum up capacity of all present people
+      filteredPeople.forEach(person => {
+        const periods = person.attendance[dateKey];
+        const personCapacity = peopleData?.find(p => p.id === person.id)?.capacity || 100;
+        
+        if (!periods) return;
+        
+        // Calculate capacity contribution based on attendance
+        if (periods.fullDay === 'present' || periods.fullDay === 'homeworking') {
+          dayCapacity += personCapacity / 100; // Full day
+        } else if (periods.morning === 'present' || periods.morning === 'homeworking') {
+          dayCapacity += (personCapacity / 100) * 0.5; // Half day
+        } else if (periods.afternoon === 'present' || periods.afternoon === 'homeworking') {
+          dayCapacity += (personCapacity / 100) * 0.5; // Half day
+        }
+      });
+      
+      capacityByDay[day] = dayCapacity;
+    });
+    
+    return capacityByDay;
+  };
+
+  // Group capacity by sprint
+  const getSprintCapacityTotals = (workingDays: number[], capacityByDay: { [key: number]: number }) => {
+    const sprintTotals: { [sprintNumber: number]: { total: number; days: number[] } } = {};
+    
+    workingDays.forEach(day => {
+      const sprintInfo = getSprintInfo(day, currentMonth, currentYear);
+      if (sprintInfo.sprintNumber > 0) {
+        if (!sprintTotals[sprintInfo.sprintNumber]) {
+          sprintTotals[sprintInfo.sprintNumber] = { total: 0, days: [] };
+        }
+        sprintTotals[sprintInfo.sprintNumber].total += capacityByDay[day] || 0;
+        sprintTotals[sprintInfo.sprintNumber].days.push(day);
+      }
+    });
+    
+    return sprintTotals;
+  };
+
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
@@ -496,6 +545,8 @@ const MONTHS = [
 
   const workingDays = getWorkingDays(currentMonth, currentYear);
   const sprintHeaders = getSprintHeaderInfo(workingDays);
+  const capacityByDay = getSprintCapacities(workingDays);
+  const sprintCapacityTotals = getSprintCapacityTotals(workingDays, capacityByDay);
 
   return (
     <div className="min-h-screen bg-gradient-subtle p-1">
@@ -625,6 +676,22 @@ const MONTHS = [
                       );
                     })}
                     <TableHead className="text-center w-[50px] p-1.5 border-b-0 text-xs"></TableHead>
+                  </TableRow>
+                  {/* Sprint Capacity row */}
+                  <TableRow className="bg-primary/5 h-7">
+                    <TableHead colSpan={3} className="p-1.5 text-xs font-semibold text-primary">Sprint Capacity</TableHead>
+                    {workingDays.map(day => {
+                      const sprintInfo = sprintHeaders[day];
+                      const capacity = capacityByDay[day] || 0;
+                      return (
+                        <TableHead key={`capacity-${day}`} className={`text-center w-[32px] p-1 text-[10px] font-bold text-primary ${getSprintClass(day, currentMonth, currentYear)}`}>
+                          {sprintInfo?.isStart && sprintCapacityTotals[sprintInfo.sprintNumber] 
+                            ? sprintCapacityTotals[sprintInfo.sprintNumber].total.toFixed(1) 
+                            : ''}
+                        </TableHead>
+                      );
+                    })}
+                    <TableHead className="text-center w-[50px] p-1.5 text-xs"></TableHead>
                   </TableRow>
                   {/* Day row */}
                   <TableRow className="h-7">
