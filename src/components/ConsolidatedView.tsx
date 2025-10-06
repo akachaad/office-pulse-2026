@@ -417,7 +417,8 @@ export default function ConsolidatedView() {
 
   // Sprint calculation functions
   const getSprintInfo = (day: number, month: number, year: number = 2025) => {
-    const date = new Date(year, month, day);
+    // month parameter is 1-indexed (1-12), convert to 0-indexed for Date constructor
+    const date = new Date(year, month - 1, day);
     let sprintStartDate: Date;
     let baseSprintNumber: number;
     
