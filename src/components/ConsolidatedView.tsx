@@ -665,23 +665,23 @@ const MONTHS = [
                 <table className="w-full caption-bottom text-sm">
                 <thead>
                   {/* Sprint row */}
-                  <tr className="border-b-2 h-7 border-b">
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[100px] p-1.5 border-b-0 text-xs"></th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[110px] p-1.5 border-b-0 text-xs"></th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[80px] p-1.5 border-b-0 text-xs"></th>
+                  <tr className="sticky top-0 z-30 bg-background border-b-2 h-7 border-b">
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[100px] p-1.5 border-b-0 text-xs bg-background"></th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[110px] p-1.5 border-b-0 text-xs bg-background"></th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[80px] p-1.5 border-b-0 text-xs bg-background"></th>
                     {workingDays.map(day => {
                       const sprintInfo = sprintHeaders[day];
                       return (
-                        <th key={`sprint-${day}`} className={`h-12 px-4 text-left align-middle font-medium text-muted-foreground text-center w-[32px] p-1 border-b-0 text-[10px] ${sprintInfo ? getSprintClass(day, currentMonth, currentYear) : ''}`}>
+                        <th key={`sprint-${day}`} className={`h-12 px-4 text-left align-middle font-medium text-muted-foreground text-center w-[32px] p-1 border-b-0 text-[10px] bg-background ${sprintInfo ? getSprintClass(day, currentMonth, currentYear) : ''}`}>
                           {sprintInfo?.isStart ? `S${sprintInfo.sprintNumber}` : sprintInfo?.isEnd ? '→' : sprintInfo ? '•' : ''}
                         </th>
                       );
                     })}
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-center w-[50px] p-1.5 border-b-0 text-xs"></th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-center w-[50px] p-1.5 border-b-0 text-xs bg-background"></th>
                   </tr>
                   {/* Sprint Capacity row */}
-                  <tr className="bg-primary/5 h-7 border-b">
-                    <th colSpan={3} className="h-12 px-4 text-left align-middle font-medium text-muted-foreground p-1.5 text-xs font-semibold text-primary">Sprint Capacity</th>
+                  <tr className="sticky top-[28px] z-30 bg-primary/5 h-7 border-b">
+                    <th colSpan={3} className="h-12 px-4 text-left align-middle font-medium text-muted-foreground p-1.5 text-xs font-semibold text-primary bg-primary/5">Sprint Capacity</th>
                     {workingDays.map(day => {
                       const sprintInfo = sprintHeaders[day];
                       const capacity = capacityByDay[day] || 0;
@@ -693,10 +693,10 @@ const MONTHS = [
                         </th>
                       );
                     })}
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-center w-[50px] p-1.5 text-xs"></th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-center w-[50px] p-1.5 text-xs bg-primary/5"></th>
                   </tr>
                   {/* Day row */}
-                  <TableRow className="sticky top-0 z-20 bg-background h-7">
+                  <TableRow className="sticky top-[56px] z-30 bg-background h-7">
                     <TableHead className="w-[100px] p-1.5 text-xs bg-background">Name</TableHead>
                     <TableHead className="w-[110px] p-1.5 text-xs bg-background">Role</TableHead>
                     <TableHead className="w-[80px] p-1.5 text-xs bg-background">Team</TableHead>
