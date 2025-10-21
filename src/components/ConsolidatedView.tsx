@@ -694,16 +694,16 @@ const MONTHS = [
                     <TableHead className="text-center w-[50px] p-1.5 text-xs"></TableHead>
                   </TableRow>
                   {/* Day row */}
-                  <TableRow className="h-7">
-                    <TableHead className="w-[100px] p-1.5 text-xs">Name</TableHead>
-                    <TableHead className="w-[110px] p-1.5 text-xs">Role</TableHead>
-                    <TableHead className="w-[80px] p-1.5 text-xs">Team</TableHead>
+                  <TableRow className="sticky top-0 z-20 bg-background h-7">
+                    <TableHead className="w-[100px] p-1.5 text-xs bg-background">Name</TableHead>
+                    <TableHead className="w-[110px] p-1.5 text-xs bg-background">Role</TableHead>
+                    <TableHead className="w-[80px] p-1.5 text-xs bg-background">Team</TableHead>
                     {workingDays.map(day => (
-                      <TableHead key={day} className={`text-center w-[32px] p-1 text-xs ${getSprintClass(day, currentMonth, currentYear)}`}>
+                      <TableHead key={day} className={`text-center w-[32px] p-1 text-xs bg-background ${getSprintClass(day, currentMonth, currentYear)}`}>
                         {day}
                       </TableHead>
                     ))}
-                    <TableHead className="text-center w-[50px] p-1.5 text-xs">Days</TableHead>
+                    <TableHead className="text-center w-[50px] p-1.5 text-xs bg-background">Days</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
