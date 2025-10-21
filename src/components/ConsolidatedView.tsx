@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChevronLeft, ChevronRight, Users, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -659,40 +660,41 @@ const MONTHS = [
             </CardTitle>
           </CardHeader>
           <CardContent className="p-1">
-            <div className="w-full max-h-[600px] overflow-auto">
-              <Table>
-                <TableHeader>
+            <ScrollArea className="h-[600px] w-full">
+              <div className="w-full">
+                <table className="w-full caption-bottom text-sm">
+                <thead>
                   {/* Sprint row */}
-                  <TableRow className="border-b-2 h-7">
-                    <TableHead className="w-[100px] p-1.5 border-b-0 text-xs"></TableHead>
-                    <TableHead className="w-[110px] p-1.5 border-b-0 text-xs"></TableHead>
-                    <TableHead className="w-[80px] p-1.5 border-b-0 text-xs"></TableHead>
+                  <tr className="border-b-2 h-7 border-b">
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[100px] p-1.5 border-b-0 text-xs"></th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[110px] p-1.5 border-b-0 text-xs"></th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[80px] p-1.5 border-b-0 text-xs"></th>
                     {workingDays.map(day => {
                       const sprintInfo = sprintHeaders[day];
                       return (
-                        <TableHead key={`sprint-${day}`} className={`text-center w-[32px] p-1 border-b-0 text-[10px] font-medium ${sprintInfo ? getSprintClass(day, currentMonth, currentYear) : ''}`}>
+                        <th key={`sprint-${day}`} className={`h-12 px-4 text-left align-middle font-medium text-muted-foreground text-center w-[32px] p-1 border-b-0 text-[10px] ${sprintInfo ? getSprintClass(day, currentMonth, currentYear) : ''}`}>
                           {sprintInfo?.isStart ? `S${sprintInfo.sprintNumber}` : sprintInfo?.isEnd ? '→' : sprintInfo ? '•' : ''}
-                        </TableHead>
+                        </th>
                       );
                     })}
-                    <TableHead className="text-center w-[50px] p-1.5 border-b-0 text-xs"></TableHead>
-                  </TableRow>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-center w-[50px] p-1.5 border-b-0 text-xs"></th>
+                  </tr>
                   {/* Sprint Capacity row */}
-                  <TableRow className="bg-primary/5 h-7">
-                    <TableHead colSpan={3} className="p-1.5 text-xs font-semibold text-primary">Sprint Capacity</TableHead>
+                  <tr className="bg-primary/5 h-7 border-b">
+                    <th colSpan={3} className="h-12 px-4 text-left align-middle font-medium text-muted-foreground p-1.5 text-xs font-semibold text-primary">Sprint Capacity</th>
                     {workingDays.map(day => {
                       const sprintInfo = sprintHeaders[day];
                       const capacity = capacityByDay[day] || 0;
                       return (
-                        <TableHead key={`capacity-${day}`} className={`text-center w-[32px] p-1 text-[10px] font-bold text-primary ${getSprintClass(day, currentMonth, currentYear)}`}>
+                        <th key={`capacity-${day}`} className={`h-12 px-4 text-left align-middle font-medium text-muted-foreground text-center w-[32px] p-1 text-[10px] font-bold text-primary ${getSprintClass(day, currentMonth, currentYear)}`}>
                           {sprintInfo?.isStart && sprintCapacityTotals[sprintInfo.sprintNumber] 
                             ? sprintCapacityTotals[sprintInfo.sprintNumber].total.toFixed(1) 
                             : ''}
-                        </TableHead>
+                        </th>
                       );
                     })}
-                    <TableHead className="text-center w-[50px] p-1.5 text-xs"></TableHead>
-                  </TableRow>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-center w-[50px] p-1.5 text-xs"></th>
+                  </tr>
                   {/* Day row */}
                   <TableRow className="sticky top-0 z-20 bg-background h-7">
                     <TableHead className="w-[100px] p-1.5 text-xs bg-background">Name</TableHead>
@@ -705,63 +707,63 @@ const MONTHS = [
                     ))}
                     <TableHead className="text-center w-[50px] p-1.5 text-xs bg-background">Days</TableHead>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
+                </thead>
+                <tbody>
                   {Object.entries(groupedPeople).map(([teamName, teamMembers]) => (
                     <React.Fragment key={teamName}>
                       {/* Team Header Row */}
                       {selectedTeam === 'All' && (
-                        <TableRow className="bg-muted/30 hover:bg-muted/30 h-7">
-                          <TableCell colSpan={workingDays.length + 4} className="font-bold text-xs py-1.5 p-1.5">
+                        <tr className="bg-muted/30 hover:bg-muted/30 h-7 border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                          <td className="p-4 align-middle font-bold text-xs py-1.5 p-1.5" colSpan={workingDays.length + 4}>
                             <div className="flex items-center gap-1.5">
                               <Users className="h-3.5 w-3.5 text-primary" />
                               {teamName} ({teamMembers.length})
                             </div>
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       )}
                       {/* Team Members */}
                       {teamMembers.map(person => {
                         const stats = getPersonStats(person, currentMonth, currentYear);
                         return (
-                          <TableRow key={person.id} className="hover:bg-muted/50 h-8">
-                            <TableCell className="font-medium p-1.5 text-xs">{person.trigramme}</TableCell>
-                            <TableCell className="text-muted-foreground p-1.5 text-xs truncate max-w-[110px]">{person.role}</TableCell>
-                            <TableCell className="p-1.5">
+                          <tr key={person.id} className="hover:bg-muted/50 h-8 border-b transition-colors data-[state=selected]:bg-muted">
+                            <td className="p-4 align-middle font-medium p-1.5 text-xs">{person.trigramme}</td>
+                            <td className="p-4 align-middle text-muted-foreground p-1.5 text-xs truncate max-w-[110px]">{person.role}</td>
+                            <td className="p-4 align-middle p-1.5">
                               <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
                                 {person.team}
                               </Badge>
-                            </TableCell>
+                            </td>
                             {workingDays.map(day => {
                               const dateKey = formatDateKey(day, currentMonth, currentYear);
                               const periods = person.attendance[dateKey];
                               
                               if (!periods) {
                                 return (
-                                  <TableCell 
+                                  <td 
                                     key={day} 
-                                    className={`text-center cursor-pointer hover:bg-muted/50 p-1 ${getSprintClass(day, currentMonth, currentYear)}`}
+                                    className={`p-4 align-middle text-center cursor-pointer hover:bg-muted/50 p-1 ${getSprintClass(day, currentMonth, currentYear)}`}
                                     onClick={() => handleCellClick(person.id, dateKey, null, null, null)}
                                   >
                                     <span className="text-sm font-bold text-muted-foreground">
                                       {getStatusIcon(null)}
                                     </span>
-                                  </TableCell>
+                                  </td>
                                 );
                               }
                               
                               // Show full day status if present
                               if (periods.fullDay) {
                                 return (
-                                  <TableCell 
+                                  <td 
                                     key={day} 
-                                    className={`text-center cursor-pointer hover:bg-muted/50 p-1 ${getSprintClass(day, currentMonth, currentYear)}`}
+                                    className={`p-4 align-middle text-center cursor-pointer hover:bg-muted/50 p-1 ${getSprintClass(day, currentMonth, currentYear)}`}
                                     onClick={() => handleCellClick(person.id, dateKey, null, null, periods.fullDay)}
                                   >
                                     <span className={`text-sm font-bold ${getStatusColor(periods.fullDay)}`}>
                                       {getStatusIcon(periods.fullDay)}
                                     </span>
-                                  </TableCell>
+                                  </td>
                                 );
                               }
                               
@@ -771,22 +773,22 @@ const MONTHS = [
                               
                               if (!hasMorning && !hasAfternoon) {
                                 return (
-                                  <TableCell 
+                                  <td 
                                     key={day} 
-                                    className={`text-center cursor-pointer hover:bg-muted/50 p-1 ${getSprintClass(day, currentMonth, currentYear)}`}
+                                    className={`p-4 align-middle text-center cursor-pointer hover:bg-muted/50 p-1 ${getSprintClass(day, currentMonth, currentYear)}`}
                                     onClick={() => handleCellClick(person.id, dateKey, null, null, null)}
                                   >
                                     <span className="text-sm font-bold text-muted-foreground">
                                       {getStatusIcon(null)}
                                     </span>
-                                  </TableCell>
+                                  </td>
                                 );
                               }
                               
                               return (
-                                <TableCell 
+                                <td 
                                   key={day} 
-                                  className={`text-center cursor-pointer hover:bg-muted/50 p-0.5 ${getSprintClass(day, currentMonth, currentYear)}`}
+                                  className={`p-4 align-middle text-center cursor-pointer hover:bg-muted/50 p-0.5 ${getSprintClass(day, currentMonth, currentYear)}`}
                                   onClick={() => handleCellClick(person.id, dateKey, periods.morning, periods.afternoon, null)}
                                 >
                                   <div className="flex flex-col items-center gap-0">
@@ -797,22 +799,23 @@ const MONTHS = [
                                       {hasAfternoon ? getStatusIcon(periods.afternoon) : '·'}
                                     </span>
                                   </div>
-                                </TableCell>
+                                </td>
                               );
                             })}
-                            <TableCell className="text-center p-1.5">
+                            <td className="p-4 align-middle text-center p-1.5">
                               <span className="font-bold text-xs text-primary">
                                 {stats.present + stats.homeworking}
                               </span>
-                            </TableCell>
-                          </TableRow>
+                            </td>
+                          </tr>
                         );
                       })}
                     </React.Fragment>
                   ))}
-                </TableBody>
-              </Table>
-            </div>
+                </tbody>
+              </table>
+              </div>
+            </ScrollArea>
           </CardContent>
         </Card>
 
