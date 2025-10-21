@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { ChevronLeft, ChevronRight, Users, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -661,7 +661,7 @@ const MONTHS = [
           </CardHeader>
           <CardContent className="p-1">
             <ScrollArea className="h-[600px] w-full">
-              <div className="w-full">
+              <div className="min-w-max">
                 <table className="w-full caption-bottom text-sm">
                 <thead>
                   {/* Sprint row */}
@@ -815,6 +815,7 @@ const MONTHS = [
                 </tbody>
               </table>
               </div>
+              <ScrollBar orientation="horizontal" />
             </ScrollArea>
           </CardContent>
         </Card>
