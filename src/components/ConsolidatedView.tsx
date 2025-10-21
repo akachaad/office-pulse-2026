@@ -659,7 +659,7 @@ const MONTHS = [
             </CardTitle>
           </CardHeader>
           <CardContent className="p-1">
-            <div className="w-full overflow-x-auto">
+            <div className="w-full max-h-[600px] overflow-auto">
               <Table>
                 <TableHeader>
                   {/* Sprint row */}
